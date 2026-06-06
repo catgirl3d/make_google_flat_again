@@ -2,6 +2,8 @@
 
 A Firefox extension aimed at restoring older, flatter, and more distinguishable Google Workspace icons instead of the new gradient redesign.
 
+<img src="./img.jpeg" alt="Make Google Flat Again concept" width="150" />
+
 ## Idea
 
 This project is not a full "theme for all of Google". It is a targeted replacement of visual elements:
