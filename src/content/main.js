@@ -67,6 +67,16 @@
   }
 
   const extensionApi = extension.runtime.getExtensionApi();
+  const bootstrapPrimaryApp = extension.apps.findPrimaryApp(window.location);
+
+  if (bootstrapPrimaryApp) {
+    setDocumentAttribute("data-mgfa-app", bootstrapPrimaryApp.id);
+    logger.event("bootstrap-primary-app", {
+      appId: bootstrapPrimaryApp.id,
+      pathname: window.location.pathname,
+      readyState: document.readyState
+    });
+  }
 
   extension.settings.getOptions(extensionApi).then((options) => {
     const context = { extension, options };

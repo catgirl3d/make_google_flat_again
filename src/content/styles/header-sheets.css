@@ -1,8 +1,8 @@
-html[data-mgfa-app="sheets"] #docs-branding-logo .docs-branding-icon {
+#docs-branding-logo .docs-branding-icon {
   position: relative !important;
 }
 
-html[data-mgfa-app="sheets"] #docs-branding-logo .docs-branding-icon-img[class*="docs-icon-sheets-2026"] {
+#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-sheets-2026"] {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -14,15 +14,15 @@ html[data-mgfa-app="sheets"] #docs-branding-logo .docs-branding-icon-img[class*=
   transform: none !important;
 }
 
-html[data-mgfa-app="sheets"] #docs-branding-logo .docs-branding-icon-img[class*="docs-icon-sheets-2026"]::before,
-html[data-mgfa-app="sheets"] #docs-branding-logo .docs-branding-icon-img[class*="docs-icon-sheets-2026"]::after {
+#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-sheets-2026"]::before,
+#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-sheets-2026"]::after {
   content: none !important;
   background-image: none !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
 }
 
-html[data-mgfa-app="sheets"] a[href*="docs.google.com/spreadsheets/"] > img[src*="productlogos/sheets_2026"],
-html[data-mgfa-app="sheets"] a[href*="docs.google.com/spreadsheets/"] > img[srcset*="productlogos/sheets_2026"] {
+a[href*="docs.google.com/spreadsheets/"] > img[src*="productlogos/sheets_2026"],
+a[href*="docs.google.com/spreadsheets/"] > img[srcset*="productlogos/sheets_2026"] {
   content: url("../../../assets/icons/apps/sheets-classic.svg") !important;
 }

@@ -1,0 +1,6 @@
+a[href*="drive.google.com/drive/"] img[src*="productlogos/drive_2026"],
+a[href*="drive.google.com/drive/"] img[srcset*="productlogos/drive_2026"],
+a[href*="drive.google.com"] img[src*="productlogos/drive_2026"],
+a[href*="drive.google.com"] img[srcset*="productlogos/drive_2026"] {
+  content: url("../../../assets/icons/apps/drive-classic.svg") !important;
+}

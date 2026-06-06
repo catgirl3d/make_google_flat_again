@@ -53,6 +53,15 @@
   "content_scripts": [
     {
       "matches": [
+        "https://drive.google.com/*"
+      ],
+      "css": [
+        "src/content/styles/header-drive.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
         "https://docs.google.com/document/*"
       ],
       "css": [
@@ -109,7 +118,6 @@
         "src/content/debug-logger.js",
         "src/content/surface-registry.js",
         "src/content/surfaces/favicon.js",
-        "src/content/surfaces/header.js",
         "src/content/surfaces/sidepanel.js",
         "src/content/main.js"
       ],

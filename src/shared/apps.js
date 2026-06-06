@@ -8,16 +8,7 @@
       asset: { type: "svg", path: "assets/icons/apps/gmail-classic.svg" },
       matches: [{ hostname: "mail.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {},
-        header: {
-          keywords: ["gmail", "mail", "logo_gmail", "gmail_lockup", "mail/rfr"],
-          maxLeft: 230,
-          maxTop: 95,
-          minScore: 30,
-          sizeMin: 30,
-          sizeMax: 36,
-          useExtendedDetection: false
-        }
+        favicon: {}
       }
     },
     {
@@ -27,15 +18,6 @@
       matches: [{ hostname: "calendar.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
         favicon: { hardLock: true },
-        header: {
-          keywords: ["calendar", "calendari", "calendario", "logo_calendar", "calendar_2020q4"],
-          maxLeft: 260,
-          maxTop: 100,
-          minScore: 20,
-          sizeMin: 30,
-          sizeMax: 38,
-          useExtendedDetection: false
-        },
         sidePanel: {
           iconSize: 24,
           selectors: [
@@ -56,16 +38,7 @@
       asset: { type: "svg", path: "assets/icons/apps/drive-classic.svg" },
       matches: [{ hostname: "drive.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {},
-        header: {
-          keywords: ["drive", "logo_drive", "drive_2020q4", "drive-product-icon"],
-          maxLeft: 240,
-          maxTop: 95,
-          minScore: 20,
-          sizeMin: 30,
-          sizeMax: 38,
-          useExtendedDetection: false
-        }
+        favicon: {}
       }
     },
     {
@@ -75,20 +48,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/document/"] }],
       urlIncludes: ["docs.google.com/document"],
       surfaces: {
-        favicon: {},
-        header: {
-          targetSelectors: ["#docs-branding-logo"],
-          hideRoots: ["#docs-branding-logo", "#docs-drive-logo"],
-          keywords: ["docs", "documents", "documentos", "document", "logo_docs", "docs_2020q4"],
-          sizeMin: 24,
-          sizeMax: 34,
-          maxLeft: 210,
-          maxTop: 90,
-          minScore: 12,
-          coverPadding: 3,
-          useExtendedDetection: true,
-          forceBrandingSelector: "#docs-branding-logo"
-        }
+        favicon: {}
       }
     },
     {
@@ -98,20 +58,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/spreadsheets/"] }],
       urlIncludes: ["docs.google.com/spreadsheets"],
       surfaces: {
-        favicon: {},
-        header: {
-          targetSelectors: ["#docs-branding-logo"],
-          hideRoots: ["#docs-branding-logo", "#docs-drive-logo"],
-          keywords: ["sheets", "fulls", "hojas", "spreadsheet", "spreadsheets", "logo_sheets", "sheets_2020q4"],
-          sizeMin: 24,
-          sizeMax: 34,
-          maxLeft: 210,
-          maxTop: 90,
-          minScore: 12,
-          coverPadding: 3,
-          useExtendedDetection: true,
-          forceBrandingSelector: "#docs-branding-logo"
-        }
+        favicon: {}
       }
     },
     {
@@ -121,20 +68,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/presentation/"] }],
       urlIncludes: ["docs.google.com/presentation"],
       surfaces: {
-        favicon: {},
-        header: {
-          targetSelectors: ["#docs-branding-logo"],
-          hideRoots: ["#docs-branding-logo", "#docs-drive-logo"],
-          keywords: ["slides", "presentacions", "presentaciones", "presentation", "logo_slides", "slides_2020q4"],
-          sizeMin: 24,
-          sizeMax: 34,
-          maxLeft: 210,
-          maxTop: 90,
-          minScore: 12,
-          coverPadding: 3,
-          useExtendedDetection: true,
-          forceBrandingSelector: "#docs-branding-logo"
-        }
+        favicon: {}
       }
     },
     {
@@ -144,17 +78,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/forms/"] }],
       urlIncludes: ["docs.google.com/forms"],
       surfaces: {
-        favicon: {},
-        header: {
-          keywords: ["forms", "formularis", "formularios", "form", "google forms"],
-          maxLeft: 230,
-          maxTop: 100,
-          minScore: 12,
-          sizeMin: 24,
-          sizeMax: 36,
-          useExtendedDetection: true,
-          coverPadding: 3
-        }
+        favicon: {}
       }
     },
     {
@@ -163,16 +87,7 @@
       asset: { type: "svg", path: "assets/icons/apps/meet-classic.svg" },
       matches: [{ hostname: "meet.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {},
-        header: {
-          keywords: ["meet", "logo_meet", "meet_2020q4"],
-          maxLeft: 260,
-          maxTop: 110,
-          minScore: 18,
-          sizeMin: 30,
-          sizeMax: 40,
-          useExtendedDetection: false
-        }
+        favicon: {}
       }
     },
     {
@@ -181,16 +96,7 @@
       asset: { type: "svg", path: "assets/icons/apps/chat-classic.svg" },
       matches: [{ hostname: "chat.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {},
-        header: {
-          keywords: ["chat", "xat", "logo_chat", "chat_2020q4"],
-          maxLeft: 260,
-          maxTop: 110,
-          minScore: 18,
-          sizeMin: 30,
-          sizeMax: 40,
-          useExtendedDetection: false
-        }
+        favicon: {}
       }
     },
     {
@@ -200,15 +106,6 @@
       matches: [{ hostname: "keep.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
         favicon: {},
-        header: {
-          keywords: ["keep", "notes", "logo_keep", "keep_2020q4"],
-          maxLeft: 260,
-          maxTop: 110,
-          minScore: 18,
-          sizeMin: 30,
-          sizeMax: 40,
-          useExtendedDetection: false
-        },
         sidePanel: {
           iconSize: 24,
           selectors: [
@@ -234,15 +131,6 @@
       urlIncludes: ["www.google.com/maps"],
       surfaces: {
         favicon: { hardLock: true },
-        header: {
-          keywords: ["maps", "mapes", "mapas", "google maps", "logo_maps"],
-          maxLeft: 300,
-          maxTop: 120,
-          minScore: 14,
-          sizeMin: 30,
-          sizeMax: 42,
-          useExtendedDetection: false
-        },
         sidePanel: {
           iconSize: 24,
           selectors: [
