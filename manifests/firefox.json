@@ -20,6 +20,7 @@
       "src/shared/runtime.js",
       "src/shared/apps.js",
       "src/shared/settings.js",
+      "src/platform/content-script-registry-core.js",
       "src/platform/firefox/content-script-registry.js",
       "src/background/productlogo-dnr.js",
       "src/background/header-static-css.js",

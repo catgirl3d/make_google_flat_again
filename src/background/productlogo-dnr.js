@@ -1,39 +1,35 @@
 (function attachProductlogoDnr(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../shared/runtime.js");
+  const appsApi = globalScope.MakeGoogleFlatAgain?.apps || require("../shared/apps.js");
   const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../shared/settings.js");
 
   const RULE_DEFINITIONS = Object.freeze([
     Object.freeze({
       appId: "drive",
-      extensionPath: "/assets/icons/apps/drive-classic.svg",
       id: 2001,
       initiatorDomains: Object.freeze(["drive.google.com"]),
       urlFilter: "||www.gstatic.com/images/branding/productlogos/drive_2026/"
     }),
     Object.freeze({
       appId: "docs",
-      extensionPath: "/assets/icons/apps/docs-classic.svg",
       id: 2002,
       initiatorDomains: Object.freeze(["docs.google.com"]),
       urlFilter: "||www.gstatic.com/images/branding/productlogos/docs_2026/"
     }),
     Object.freeze({
       appId: "sheets",
-      extensionPath: "/assets/icons/apps/sheets-classic.svg",
       id: 2003,
       initiatorDomains: Object.freeze(["docs.google.com"]),
       urlFilter: "||www.gstatic.com/images/branding/productlogos/sheets_2026/"
     }),
     Object.freeze({
       appId: "slides",
-      extensionPath: "/assets/icons/apps/slides-classic.svg",
       id: 2004,
       initiatorDomains: Object.freeze(["docs.google.com"]),
       urlFilter: "||www.gstatic.com/images/branding/productlogos/slides_2026/"
     }),
     Object.freeze({
       appId: "forms",
-      extensionPath: "/assets/icons/apps/forms-classic.png",
       id: 2005,
       initiatorDomains: Object.freeze(["docs.google.com"]),
       urlFilter: "||www.gstatic.com/images/branding/productlogos/forms_2026/"
@@ -42,6 +38,16 @@
   const RULE_IDS_BY_APP = Object.freeze(Object.fromEntries(RULE_DEFINITIONS.map((definition) => [definition.appId, definition.id])));
   const MANAGED_RULE_IDS = Object.freeze(RULE_DEFINITIONS.map((definition) => definition.id));
 
+  function getExtensionPath(appId) {
+    const assetPath = appsApi.getAssetPath(appId);
+
+    if (!assetPath) {
+      throw new Error(`Missing productlogo asset path for app: ${appId}`);
+    }
+
+    return `/${assetPath}`;
+  }
+
   function buildRule(definition) {
     return {
       id: definition.id,
@@ -49,7 +55,7 @@
       action: {
         type: "redirect",
         redirect: {
-          extensionPath: definition.extensionPath
+          extensionPath: getExtensionPath(definition.appId)
         }
       },
       condition: {
@@ -122,6 +128,7 @@
     RULE_DEFINITIONS,
     RULE_IDS_BY_APP,
     MANAGED_RULE_IDS,
+    getExtensionPath,
     buildRule,
     buildDynamicRules,
     updateDynamicRules,

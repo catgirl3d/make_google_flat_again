@@ -2,8 +2,10 @@
   const extension = globalThis.MakeGoogleFlatAgain;
   const debugApi = extension?.debugLogger || require("./debug-logger.js");
   const logger = debugApi.create("main");
+  const DOCS_SHARED_ACTIVE_ID = "docs-shared";
+  const DOCS_SHARED_MATCH = { hostname: "docs.google.com", pathnamePrefixes: ["/"] };
 
-  if (!extension?.apps || !extension?.guards || !extension?.settings || !extension?.targets || !extension?.surfaceRegistry) {
+  if (!extension?.apps || !extension?.guards || !extension?.settings || !extension?.surfaceRegistry) {
     return;
   }
 
@@ -20,15 +22,27 @@
     document.documentElement?.removeAttribute(attributeName);
   }
 
+  function findActiveTargetIds(locationLike, enabledMatchingApps, options) {
+    if (options?.enabled === false) {
+      return [];
+    }
+
+    const targetIds = [];
+
+    if (extension.apps.locationMatchesRule(locationLike, DOCS_SHARED_MATCH)) {
+      targetIds.push(DOCS_SHARED_ACTIVE_ID);
+    }
+
+    return targetIds.concat(enabledMatchingApps.map((app) => app.id));
+  }
+
   function updatePageAttributes(options) {
     const extensionEnabled = options?.enabled !== false;
     const pauseRule = extension.guards.getPauseRule(window.location);
-    const matchingTargets = extension.targets.findMatchingTargets(window.location).filter((target) => {
-      return extensionEnabled && (!target.appId || extension.settings.appEnabled(target.appId, options));
-    });
     const matchingApps = extension.apps.findMatchingApps(window.location).filter((app) => {
       return extensionEnabled && extension.settings.appEnabled(app.id, options);
     });
+    const activeTargetIds = findActiveTargetIds(window.location, matchingApps, options);
     const primaryApp = extension.apps.findPrimaryApp(window.location);
 
     if (!extensionEnabled) {
@@ -43,8 +57,8 @@
       removeDocumentAttribute("data-mgfa-paused");
     }
 
-    if (matchingTargets.length > 0) {
-      setDocumentAttribute("data-mgfa-active", matchingTargets.map((target) => target.id).join(" "));
+    if (activeTargetIds.length > 0) {
+      setDocumentAttribute("data-mgfa-active", activeTargetIds.join(" "));
     } else {
       removeDocumentAttribute("data-mgfa-active");
     }
@@ -56,10 +70,10 @@
     }
 
     logger.snapshot("page-state", {
-      activeAttribute: matchingTargets.map((target) => target.id),
+      activeAttribute: activeTargetIds,
       enabledPrimaryApp: primaryApp && extension.settings.appEnabled(primaryApp.id, options) ? primaryApp.id : null,
       matchingApps: matchingApps.map((app) => app.id),
-      matchingTargets: matchingTargets.map((target) => target.id),
+      matchingTargets: activeTargetIds,
       pauseRule: pauseRule?.id || null,
       pathname: window.location.pathname,
       readyState: document.readyState

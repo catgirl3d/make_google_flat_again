@@ -3,6 +3,7 @@ if (typeof importScripts === "function") {
     "../shared/runtime.js",
     "../shared/apps.js",
     "../shared/settings.js",
+    "../platform/content-script-registry-core.js",
     "../platform/chrome/content-script-registry.js",
     "./productlogo-dnr.js",
     "./header-static-css.js",

@@ -46,7 +46,6 @@
         "src/shared/apps.js",
         "src/shared/guards.js",
         "src/shared/settings.js",
-        "src/shared/targets.js",
         "src/content/debug-logger.js",
         "src/content/surface-registry.js",
         "src/content/surfaces/favicon.js",
