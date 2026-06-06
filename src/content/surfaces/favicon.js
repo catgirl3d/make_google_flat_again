@@ -1,0 +1,314 @@
+(function attachFaviconSurface(globalScope) {
+  const runtime = globalScope.__MGFA_RUNTIME__ || require("../../shared/runtime.js");
+  const appsApi = globalScope.MakeGoogleFlatAgain?.apps || require("../../shared/apps.js");
+  const debugApi = globalScope.MakeGoogleFlatAgain?.debugLogger || require("../debug-logger.js");
+  const guardsApi = globalScope.MakeGoogleFlatAgain?.guards || require("../../shared/guards.js");
+  const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../../shared/settings.js");
+  const surfaceRegistry = globalScope.MakeGoogleFlatAgain?.surfaceRegistry || require("../surface-registry.js");
+  const logger = debugApi.create("favicon");
+
+  const MANAGED_ICON_SELECTOR = 'link[data-mgfa-favicon="1"]';
+
+  function relIsIcon(rel) {
+    return /\bicon\b/i.test(String(rel || "")) || /apple-touch-icon|mask-icon/i.test(String(rel || ""));
+  }
+
+  function getAppIconUrl(app) {
+    return runtime.getRuntimeUrl(appsApi.getAssetPath(app));
+  }
+
+  function getAppMimeType(app) {
+    if (app.asset.type === "png") {
+      return "image/png";
+    }
+
+    if (app.asset.type === "calendar-day") {
+      return "image/webp";
+    }
+
+    return "image/svg+xml";
+  }
+
+  function createManagedLink(rel, href, type, appId) {
+    const link = document.createElement("link");
+    link.dataset.mgfaFavicon = "1";
+    link.dataset.mgfaFaviconApp = appId;
+    link.rel = rel;
+    link.href = href;
+    link.type = type;
+    return link;
+  }
+
+  function scheduleNextMidnight(callback) {
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(24, 0, 5, 0);
+    return window.setTimeout(callback, Math.max(1000, next.getTime() - now.getTime()));
+  }
+
+  function start(context) {
+    let originalIcons = null;
+    let observer = null;
+    let scheduled = false;
+    let applying = false;
+    let midnightTimer = null;
+
+    function getCurrentApp() {
+      const app = appsApi.findPrimaryApp(window.location);
+
+      if (!app) {
+        return null;
+      }
+
+      if (!app.surfaces?.favicon) {
+        return null;
+      }
+
+      if (!settingsApi.appEnabled(app.id, context.options)) {
+        return null;
+      }
+
+      return app;
+    }
+
+    function captureOriginalIcons() {
+      if (originalIcons !== null || !document.head) {
+        return;
+      }
+
+      originalIcons = Array.from(document.querySelectorAll("link"))
+        .filter((element) => relIsIcon(element.rel) && element.dataset.mgfaFavicon !== "1")
+        .map((element) => ({
+          rel: element.getAttribute("rel") || "icon",
+          href: element.getAttribute("href") || "",
+          type: element.getAttribute("type") || "",
+          sizes: element.getAttribute("sizes") || "",
+          color: element.getAttribute("color") || ""
+        }))
+        .filter((item) => item.href);
+
+      logger.snapshot("original-icons", {
+        captured: originalIcons.length,
+        hrefs: originalIcons.map((item) => item.href)
+      });
+    }
+
+    function restoreOriginalIconsIfNeeded() {
+      if (!document.head || !originalIcons?.length) {
+        return;
+      }
+
+      const hasAnyIcon = Array.from(document.querySelectorAll("link")).some((element) => relIsIcon(element.rel));
+
+      if (hasAnyIcon) {
+        return;
+      }
+
+      for (const item of originalIcons) {
+        const link = document.createElement("link");
+        link.rel = item.rel;
+        link.href = item.href;
+        if (item.type) link.type = item.type;
+        if (item.sizes) link.setAttribute("sizes", item.sizes);
+        if (item.color) link.setAttribute("color", item.color);
+        document.head.appendChild(link);
+      }
+    }
+
+    function cleanup(reason) {
+      logger.snapshot("cleanup", {
+        managedIcons: document.querySelectorAll(MANAGED_ICON_SELECTOR).length,
+        reason: reason || "unspecified",
+        restoredOriginalIcons: Boolean(originalIcons?.length)
+      });
+      document.querySelectorAll(MANAGED_ICON_SELECTOR).forEach((element) => element.remove());
+      document.documentElement?.removeAttribute("data-mgfa-favicon-app");
+      restoreOriginalIconsIfNeeded();
+
+      if (midnightTimer) {
+        clearTimeout(midnightTimer);
+        midnightTimer = null;
+      }
+    }
+
+    function scheduleMidnightRefresh(app) {
+      if (app.id !== "calendar") {
+        if (midnightTimer) {
+          clearTimeout(midnightTimer);
+          midnightTimer = null;
+        }
+        return;
+      }
+
+      if (midnightTimer) {
+        clearTimeout(midnightTimer);
+      }
+
+      midnightTimer = scheduleNextMidnight(() => {
+        apply();
+        scheduleMidnightRefresh(app);
+      });
+    }
+
+    function apply() {
+      const paused = guardsApi.shouldPauseOnPage(window.location);
+      if (paused) {
+        cleanup("paused");
+        return;
+      }
+
+      const app = getCurrentApp();
+
+      if (!app || !document.head) {
+        cleanup(!document.head ? "missing-head" : "no-app");
+        return;
+      }
+
+      captureOriginalIcons();
+
+      const href = getAppIconUrl(app);
+      const type = getAppMimeType(app);
+      const hardLock = Boolean(app.surfaces.favicon.hardLock);
+
+      logger.snapshot("apply-input", {
+        appId: app.id,
+        hardLock,
+        href,
+        managedIcons: document.querySelectorAll(MANAGED_ICON_SELECTOR).length,
+        paused,
+        readyState: document.readyState,
+        type
+      });
+
+      applying = true;
+
+      try {
+        if (hardLock) {
+          Array.from(document.querySelectorAll("link"))
+            .filter((element) => relIsIcon(element.rel) && element.dataset.mgfaFavicon !== "1")
+            .forEach((element) => element.remove());
+        }
+
+        let primary = document.querySelector(`${MANAGED_ICON_SELECTOR}[data-mgfa-favicon-role="primary"]`);
+        if (!primary) {
+          primary = createManagedLink("icon", href, type, app.id);
+          primary.dataset.mgfaFaviconRole = "primary";
+          primary.setAttribute("sizes", "any");
+          document.head.appendChild(primary);
+        }
+
+        primary.rel = "icon";
+        primary.href = href;
+        primary.type = type;
+        primary.setAttribute("sizes", "any");
+
+        let shortcut = document.querySelector(`${MANAGED_ICON_SELECTOR}[data-mgfa-favicon-role="shortcut"]`);
+        if (!shortcut) {
+          shortcut = createManagedLink("shortcut icon", href, type, app.id);
+          shortcut.dataset.mgfaFaviconRole = "shortcut";
+          document.head.appendChild(shortcut);
+        }
+
+        shortcut.rel = "shortcut icon";
+        shortcut.href = href;
+        shortcut.type = type;
+
+        document.head.appendChild(primary);
+        document.head.appendChild(shortcut);
+        document.documentElement?.setAttribute("data-mgfa-favicon-app", app.id);
+        logger.snapshot("applied", {
+          appId: app.id,
+          hardLock,
+          href,
+          managedIcons: document.querySelectorAll(MANAGED_ICON_SELECTOR).length,
+          primaryHref: primary.href,
+          shortcutHref: shortcut.href,
+          type
+        });
+        scheduleMidnightRefresh(app);
+      } finally {
+        window.setTimeout(() => {
+          applying = false;
+        }, 0);
+      }
+    }
+
+    function ensureHeadAndApply() {
+      if (document.head) {
+        apply();
+        return;
+      }
+
+      window.requestAnimationFrame(ensureHeadAndApply);
+    }
+
+    function schedule(delay = 60) {
+      if (scheduled) {
+        return;
+      }
+
+      scheduled = true;
+      window.setTimeout(() => {
+        scheduled = false;
+        ensureHeadAndApply();
+      }, delay);
+    }
+
+    function startObserver() {
+      if (observer || !document.head) {
+        return;
+      }
+
+      observer = new MutationObserver(() => {
+        if (!applying) {
+          schedule(50);
+        }
+      });
+
+      observer.observe(document.head, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["href", "rel", "type", "sizes"]
+      });
+    }
+
+    logger.event("surface-started", { readyState: document.readyState });
+    ensureHeadAndApply();
+
+    if (document.readyState === "loading") {
+      document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+          ensureHeadAndApply();
+          startObserver();
+        },
+        { once: true }
+      );
+    } else {
+      startObserver();
+    }
+
+    window.addEventListener("focus", () => schedule(60), { passive: true });
+    window.addEventListener("popstate", () => schedule(60), { passive: true });
+    window.addEventListener("hashchange", () => schedule(60), { passive: true });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        schedule(60);
+      }
+    }, { passive: true });
+  }
+
+  const api = {
+    name: "favicon",
+    start,
+    relIsIcon,
+    getAppMimeType
+  };
+
+  surfaceRegistry.register(api);
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = api;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this);

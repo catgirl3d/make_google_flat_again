@@ -1,0 +1,141 @@
+:root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 360px;
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.popup-shell {
+  padding: 16px;
+}
+
+.popup-header {
+  margin-bottom: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex: 0 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.summary {
+  margin-top: 8px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.card {
+  padding: 14px;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  background: #0f172a;
+}
+
+.card + .card {
+  margin-top: 12px;
+}
+
+.card-muted p {
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pill-muted {
+  background: #334155;
+}
+
+.item-list,
+.guard-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.item-row,
+.guard-item {
+  padding: 10px;
+  border-radius: 10px;
+  background: #111827;
+  border: 1px solid #1f2937;
+}
+
+.item-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.item-name {
+  display: block;
+  font-weight: 700;
+}
+
+.item-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+}

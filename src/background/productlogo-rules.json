@@ -1,0 +1,72 @@
+[
+  {
+    "id": 2001,
+    "priority": 30,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/assets/icons/apps/drive-classic.svg"
+      }
+    },
+    "condition": {
+      "urlFilter": "||www.gstatic.com/images/branding/productlogos/drive_2026/",
+      "resourceTypes": ["image"]
+    }
+  },
+  {
+    "id": 2002,
+    "priority": 30,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/assets/icons/apps/docs-classic.svg"
+      }
+    },
+    "condition": {
+      "urlFilter": "||www.gstatic.com/images/branding/productlogos/docs_2026/",
+      "resourceTypes": ["image"]
+    }
+  },
+  {
+    "id": 2003,
+    "priority": 30,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/assets/icons/apps/sheets-classic.svg"
+      }
+    },
+    "condition": {
+      "urlFilter": "||www.gstatic.com/images/branding/productlogos/sheets_2026/",
+      "resourceTypes": ["image"]
+    }
+  },
+  {
+    "id": 2004,
+    "priority": 30,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/assets/icons/apps/slides-classic.svg"
+      }
+    },
+    "condition": {
+      "urlFilter": "||www.gstatic.com/images/branding/productlogos/slides_2026/",
+      "resourceTypes": ["image"]
+    }
+  },
+  {
+    "id": 2005,
+    "priority": 30,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/assets/icons/apps/forms-classic.png"
+      }
+    },
+    "condition": {
+      "urlFilter": "||www.gstatic.com/images/branding/productlogos/forms_2026/",
+      "resourceTypes": ["image"]
+    }
+  }
+]
