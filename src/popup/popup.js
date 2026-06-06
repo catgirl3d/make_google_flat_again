@@ -7,8 +7,17 @@
 
   const appCountElement = document.getElementById("app-count");
   const appListElement = document.getElementById("app-list");
+  const extensionEnabledInput = document.getElementById("extension-enabled");
+  const extensionStatusElement = document.getElementById("extension-status");
   const guardCountElement = document.getElementById("guard-count");
   const guardListElement = document.getElementById("guard-list");
+  const saveStatusElement = document.getElementById("save-status");
+  const extensionApi = extension.runtime.getExtensionApi();
+
+  let currentOptions = extension.settings.normalizeOptions(extension.settings.DEFAULT_OPTIONS);
+  let isSaving = false;
+  let statusMessage = "";
+  let statusTone = "info";
 
   function formatMatches(matches) {
     return matches
@@ -17,6 +26,29 @@
         return prefixes ? `${rule.hostname} ${prefixes}` : rule.hostname;
       })
       .join(" | ");
+  }
+
+  function createToggleControl(inputId, checked, onChange) {
+    const label = document.createElement("label");
+    label.className = "switch";
+    label.setAttribute("for", inputId);
+
+    const input = document.createElement("input");
+    input.id = inputId;
+    input.className = "toggle-input";
+    input.type = "checkbox";
+    input.checked = checked;
+    input.disabled = isSaving;
+    input.addEventListener("change", onChange);
+
+    const track = document.createElement("span");
+    track.className = "toggle-ui";
+    track.setAttribute("aria-hidden", "true");
+
+    label.appendChild(input);
+    label.appendChild(track);
+
+    return label;
   }
 
   function createAppItem(app) {
@@ -45,7 +77,17 @@
     copy.appendChild(match);
     summary.appendChild(icon);
     summary.appendChild(copy);
-    item.appendChild(summary);
+
+    const row = document.createElement("div");
+    row.className = "toggle-row";
+    row.appendChild(summary);
+    row.appendChild(createToggleControl(`app-toggle-${app.id}`, currentOptions.apps[app.id] !== false, () => {
+      void updateOptions((nextOptions) => {
+        nextOptions.apps[app.id] = !currentOptions.apps[app.id];
+      });
+    }));
+
+    item.appendChild(row);
 
     return item;
   }
@@ -67,19 +109,81 @@
     return item;
   }
 
-  async function init() {
-    const options = await extension.settings.getOptions(extension.runtime.getExtensionApi());
+  function updateStatus(message, tone) {
+    statusMessage = message || "";
+    statusTone = tone || "info";
+  }
 
-    appCountElement.textContent = `${extension.settings.countEnabledApps(options)}/${extension.apps.apps.length}`;
-    guardCountElement.textContent = String(extension.guards.pauseRules.length);
+  function syncStatusUi() {
+    extensionStatusElement.textContent = currentOptions.enabled === false ? "Off" : "On";
+    extensionStatusElement.className = currentOptions.enabled === false ? "pill pill-off" : "pill";
+    extensionEnabledInput.checked = currentOptions.enabled !== false;
+    extensionEnabledInput.disabled = isSaving;
+    saveStatusElement.textContent = statusMessage;
+    saveStatusElement.dataset.tone = statusTone;
+    appCountElement.textContent = `${extension.settings.countEnabledApps(currentOptions)}/${extension.apps.apps.length}`;
+  }
 
-    for (const app of extension.apps.apps) {
-      appListElement.appendChild(createAppItem(app));
+  function renderApps() {
+    appListElement.replaceChildren(...extension.apps.apps.map((app) => createAppItem(app)));
+  }
+
+  async function updateOptions(mutator) {
+    if (isSaving) {
+      return;
     }
+
+    const nextOptions = {
+      enabled: currentOptions.enabled !== false,
+      apps: { ...currentOptions.apps }
+    };
+
+    mutator(nextOptions);
+
+    isSaving = true;
+    currentOptions = extension.settings.normalizeOptions(nextOptions);
+    updateStatus("Saving settings...", "info");
+    syncStatusUi();
+    renderApps();
+
+    try {
+      currentOptions = await extension.settings.setOptions(currentOptions, extensionApi);
+      updateStatus("Settings saved.", "info");
+    } catch (error) {
+      currentOptions = await extension.settings.getOptions(extensionApi);
+      updateStatus(error?.message || "Failed to save settings.", "error");
+    } finally {
+      isSaving = false;
+      syncStatusUi();
+      renderApps();
+    }
+  }
+
+  async function init() {
+    currentOptions = await extension.settings.getOptions(extensionApi);
+    updateStatus("", "info");
+    syncStatusUi();
+    renderApps();
+
+    guardCountElement.textContent = String(extension.guards.pauseRules.length);
 
     for (const rule of extension.guards.pauseRules) {
       guardListElement.appendChild(createGuardItem(rule));
     }
+
+    extensionEnabledInput.addEventListener("change", () => {
+      void updateOptions((nextOptions) => {
+        nextOptions.enabled = extensionEnabledInput.checked;
+      });
+    });
+
+    const stopObserving = extension.settings.observeOptions((nextOptions) => {
+      currentOptions = nextOptions;
+      syncStatusUi();
+      renderApps();
+    }, extensionApi);
+
+    window.addEventListener("unload", stopObserving, { once: true });
   }
 
   init();

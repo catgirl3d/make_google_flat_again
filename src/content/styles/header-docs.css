@@ -1,8 +1,8 @@
-#docs-branding-logo .docs-branding-icon {
+html[data-mgfa-app="docs"] #docs-branding-logo .docs-branding-icon {
   position: relative !important;
 }
 
-#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-docs-2026"] {
+html[data-mgfa-app="docs"] #docs-branding-logo .docs-branding-icon-img[class*="docs-icon-docs-2026"] {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -14,15 +14,15 @@
   transform: none !important;
 }
 
-#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-docs-2026"]::before,
-#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-docs-2026"]::after {
+html[data-mgfa-app="docs"] #docs-branding-logo .docs-branding-icon-img[class*="docs-icon-docs-2026"]::before,
+html[data-mgfa-app="docs"] #docs-branding-logo .docs-branding-icon-img[class*="docs-icon-docs-2026"]::after {
   content: none !important;
   background-image: none !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
 }
 
-a[href*="docs.google.com/document/"] > img[src*="productlogos/docs_2026"],
-a[href*="docs.google.com/document/"] > img[srcset*="productlogos/docs_2026"] {
+html[data-mgfa-app="docs"] a[href*="docs.google.com/document/"] > img[src*="productlogos/docs_2026"],
+html[data-mgfa-app="docs"] a[href*="docs.google.com/document/"] > img[srcset*="productlogos/docs_2026"] {
   content: url("../../../assets/icons/apps/docs-classic.svg") !important;
 }

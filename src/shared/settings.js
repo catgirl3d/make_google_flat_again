@@ -24,6 +24,20 @@
     return api?.storage?.sync || api?.storage?.local || null;
   }
 
+  function getStorageAreaName(extensionApi) {
+    const api = extensionApi || runtime.getExtensionApi();
+
+    if (api?.storage?.sync && getStorageArea(api) === api.storage.sync) {
+      return "sync";
+    }
+
+    if (api?.storage?.local && getStorageArea(api) === api.storage.local) {
+      return "local";
+    }
+
+    return null;
+  }
+
   function getOptions(extensionApi) {
     const storageArea = getStorageArea(extensionApi);
 
@@ -70,12 +84,18 @@
     try {
       if (storageArea.set.length < 2) {
         return Promise.resolve(storageArea.set(payload))
-          .then(() => normalizedOptions)
-          .catch(() => normalizedOptions);
+          .then(() => normalizedOptions);
       }
 
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         storageArea.set(payload, () => {
+          const api = extensionApi || runtime.getExtensionApi();
+
+          if (api?.runtime?.lastError) {
+            reject(new Error(api.runtime.lastError.message || "Failed to persist options."));
+            return;
+          }
+
           resolve(normalizedOptions);
         });
       });
@@ -94,16 +114,55 @@
     return APP_KEYS.filter((appId) => normalizedOptions.apps[appId] !== false).length;
   }
 
+  function getChangedOptions(changeRecord) {
+    return normalizeOptions(changeRecord?.newValue || DEFAULT_OPTIONS);
+  }
+
+  function observeOptions(listener, extensionApi) {
+    const api = extensionApi || runtime.getExtensionApi();
+
+    if (!api?.storage?.onChanged?.addListener || typeof listener !== "function") {
+      return () => {};
+    }
+
+    const expectedAreaName = getStorageAreaName(api);
+    const handler = (changes, areaName) => {
+      if (!changes || !Object.prototype.hasOwnProperty.call(changes, STORAGE_KEY)) {
+        return;
+      }
+
+      if (expectedAreaName && areaName && areaName !== expectedAreaName) {
+        return;
+      }
+
+      listener(getChangedOptions(changes[STORAGE_KEY]), {
+        areaName,
+        changeRecord: changes[STORAGE_KEY]
+      });
+    };
+
+    api.storage.onChanged.addListener(handler);
+
+    return () => {
+      if (api.storage.onChanged.removeListener) {
+        api.storage.onChanged.removeListener(handler);
+      }
+    };
+  }
+
   const api = {
     STORAGE_KEY,
     APP_KEYS,
     DEFAULT_OPTIONS,
     normalizeOptions,
     getStorageArea,
+    getStorageAreaName,
     getOptions,
     setOptions,
     appEnabled,
-    countEnabledApps
+    countEnabledApps,
+    getChangedOptions,
+    observeOptions
   };
 
   runtime.attach("settings", api);

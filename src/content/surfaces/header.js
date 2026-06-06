@@ -914,7 +914,8 @@ ${docsScopedRoots}
     resolveHeaderTarget,
     rectLooksUsable,
     buildHideCss,
-    looksLikeSingleIcon
+    looksLikeSingleIcon,
+    supportsStaticBrandingCss
   };
 
   if (typeof document !== "undefined" && typeof window !== "undefined") {

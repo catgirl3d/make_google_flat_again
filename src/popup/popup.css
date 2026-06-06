@@ -92,6 +92,10 @@ h1 {
   background: #334155;
 }
 
+.pill-off {
+  background: #475569;
+}
+
 .item-list,
 .guard-list {
   margin: 0;
@@ -115,6 +119,76 @@ h1 {
   gap: 10px;
 }
 
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toggle-row-master {
+  padding: 10px;
+  border-radius: 10px;
+  background: #111827;
+  border: 1px solid #1f2937;
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.toggle-input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-ui {
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #334155;
+  border: 1px solid #475569;
+  transition: background-color 120ms ease, border-color 120ms ease;
+  position: relative;
+}
+
+.toggle-ui::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f8fafc;
+  transition: transform 120ms ease;
+}
+
+.toggle-input:checked + .toggle-ui {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.toggle-input:checked + .toggle-ui::after {
+  transform: translateX(18px);
+}
+
+.toggle-input:focus-visible + .toggle-ui {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.toggle-input:disabled + .toggle-ui {
+  opacity: 0.5;
+}
+
 .app-icon {
   width: 20px;
   height: 20px;
@@ -133,6 +207,17 @@ h1 {
   font-size: 12px;
   line-height: 1.4;
   color: #94a3b8;
+}
+
+.status-copy {
+  min-height: 18px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.status-copy[data-tone="error"] {
+  color: #fca5a5;
 }
 
 code {

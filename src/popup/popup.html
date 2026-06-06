@@ -21,6 +21,24 @@
 
     <section class="card">
       <div class="card-heading">
+        <h2>Controls</h2>
+        <span id="extension-status" class="pill"></span>
+      </div>
+      <div class="toggle-row toggle-row-master">
+        <div>
+          <span class="item-name">Enable extension</span>
+          <span class="item-meta">Applies classic icon replacements and synced productlogo redirects.</span>
+        </div>
+        <label class="switch" for="extension-enabled">
+          <input id="extension-enabled" class="toggle-input" type="checkbox">
+          <span class="toggle-ui" aria-hidden="true"></span>
+        </label>
+      </div>
+      <p id="save-status" class="status-copy" aria-live="polite"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-heading">
         <h2>Supported Apps</h2>
         <span id="app-count" class="pill"></span>
       </div>

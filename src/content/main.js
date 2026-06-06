@@ -21,14 +21,21 @@
   }
 
   function updatePageAttributes(options) {
+    const extensionEnabled = options?.enabled !== false;
     const pauseRule = extension.guards.getPauseRule(window.location);
     const matchingTargets = extension.targets.findMatchingTargets(window.location).filter((target) => {
-      return !target.appId || extension.settings.appEnabled(target.appId, options);
+      return extensionEnabled && (!target.appId || extension.settings.appEnabled(target.appId, options));
     });
     const matchingApps = extension.apps.findMatchingApps(window.location).filter((app) => {
-      return extension.settings.appEnabled(app.id, options);
+      return extensionEnabled && extension.settings.appEnabled(app.id, options);
     });
     const primaryApp = extension.apps.findPrimaryApp(window.location);
+
+    if (!extensionEnabled) {
+      setDocumentAttribute("data-mgfa-disabled", "1");
+    } else {
+      removeDocumentAttribute("data-mgfa-disabled");
+    }
 
     if (pauseRule) {
       setDocumentAttribute("data-mgfa-paused", pauseRule.id);
@@ -42,7 +49,7 @@
       removeDocumentAttribute("data-mgfa-active");
     }
 
-    if (primaryApp && extension.settings.appEnabled(primaryApp.id, options)) {
+    if (extensionEnabled && primaryApp && extension.settings.appEnabled(primaryApp.id, options)) {
       setDocumentAttribute("data-mgfa-app", primaryApp.id);
     } else {
       removeDocumentAttribute("data-mgfa-app");
@@ -59,7 +66,11 @@
     });
   }
 
-  extension.settings.getOptions(extension.runtime.getExtensionApi()).then((options) => {
+  const extensionApi = extension.runtime.getExtensionApi();
+
+  extension.settings.getOptions(extensionApi).then((options) => {
+    const context = { extension, options };
+
     logger.snapshot("options-loaded", {
       enabled: options.enabled !== false,
       enabledApps: extension.apps.apps
@@ -68,18 +79,16 @@
     });
 
     if (options.enabled === false) {
-      setDocumentAttribute("data-mgfa-disabled", "1");
-      logger.event("bootstrap-skipped", { reason: "extension-disabled" });
-      return;
+      logger.event("extension-disabled-at-startup", { reason: "extension-disabled" });
     }
 
-    updatePageAttributes(options);
+    updatePageAttributes(context.options);
     logger.event("start-surfaces", {
       surfaces: extension.surfaceRegistry.getSurfaces().map((surface) => surface.name)
     });
-    extension.surfaceRegistry.startAll({ extension, options });
+    extension.surfaceRegistry.startAll(context);
 
-    const refreshPageAttributes = () => updatePageAttributes(options);
+    const refreshPageAttributes = () => updatePageAttributes(context.options);
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", refreshPageAttributes, { once: true });
@@ -88,5 +97,17 @@
     window.addEventListener("popstate", refreshPageAttributes, { passive: true });
     window.addEventListener("hashchange", refreshPageAttributes, { passive: true });
     window.addEventListener("focus", refreshPageAttributes, { passive: true });
+
+    extension.settings.observeOptions((nextOptions) => {
+      context.options = nextOptions;
+      refreshPageAttributes();
+      logger.snapshot("options-changed", {
+        enabled: nextOptions.enabled !== false,
+        enabledApps: extension.apps.apps
+          .filter((app) => extension.settings.appEnabled(app.id, nextOptions))
+          .map((app) => app.id)
+      });
+      window.dispatchEvent(new Event("focus"));
+    }, extensionApi);
   });
 })();
