@@ -46,6 +46,10 @@
     return window.setTimeout(callback, Math.max(1000, next.getTime() - now.getTime()));
   }
 
+  function shouldKeepObserverActive({ paused, app, hasHead }) {
+    return !paused && Boolean(app) && Boolean(hasHead);
+  }
+
   function start(context) {
     let originalIcons = null;
     let observer = null;
@@ -121,6 +125,7 @@
         reason: reason || "unspecified",
         restoredOriginalIcons: Boolean(originalIcons?.length)
       });
+      stopObserver();
       document.querySelectorAll(MANAGED_ICON_SELECTOR).forEach((element) => element.remove());
       document.documentElement?.removeAttribute("data-mgfa-favicon-app");
       restoreOriginalIconsIfNeeded();
@@ -146,23 +151,20 @@
 
       midnightTimer = scheduleNextMidnight(() => {
         apply();
-        scheduleMidnightRefresh(app);
       });
     }
 
     function apply() {
       const paused = guardsApi.shouldPauseOnPage(window.location);
-      if (paused) {
-        cleanup("paused");
-        return;
-      }
-
       const app = getCurrentApp();
+      const hasHead = Boolean(document.head);
 
-      if (!app || !document.head) {
-        cleanup(!document.head ? "missing-head" : "no-app");
+      if (!shouldKeepObserverActive({ paused, app, hasHead })) {
+        cleanup(paused ? "paused" : !hasHead ? "missing-head" : "no-app");
         return;
       }
+
+      startObserver();
 
       captureOriginalIcons();
 
@@ -194,7 +196,6 @@
           primary = createManagedLink("icon", href, type, app.id);
           primary.dataset.mgfaFaviconRole = "primary";
           primary.setAttribute("sizes", "any");
-          document.head.appendChild(primary);
         }
 
         primary.rel = "icon";
@@ -206,7 +207,6 @@
         if (!shortcut) {
           shortcut = createManagedLink("shortcut icon", href, type, app.id);
           shortcut.dataset.mgfaFaviconRole = "shortcut";
-          document.head.appendChild(shortcut);
         }
 
         shortcut.rel = "shortcut icon";
@@ -273,6 +273,15 @@
       });
     }
 
+    function stopObserver() {
+      if (!observer) {
+        return;
+      }
+
+      observer.disconnect();
+      observer = null;
+    }
+
     logger.event("surface-started", { readyState: document.readyState });
     ensureHeadAndApply();
 
@@ -281,12 +290,9 @@
         "DOMContentLoaded",
         () => {
           ensureHeadAndApply();
-          startObserver();
         },
         { once: true }
       );
-    } else {
-      startObserver();
     }
 
     window.addEventListener("focus", () => schedule(60), { passive: true });
@@ -303,7 +309,8 @@
     name: "favicon",
     start,
     relIsIcon,
-    getAppMimeType
+    getAppMimeType,
+    shouldKeepObserverActive
   };
 
   surfaceRegistry.register(api);

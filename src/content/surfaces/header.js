@@ -465,21 +465,21 @@
   }
 
   function buildHideCss(app) {
-    const scopedRoots = (app.surfaces.header.hideRoots || []).map((selector) => `html[${ATTR_NAME}="${app.id}"] ${selector}`);
-    const docsScopedRoots = scopedRoots.length
+    const hideRoots = app.surfaces.header.hideRoots || [];
+    const docsScopedRoots = hideRoots.length
       ? `
-html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${app.surfaces.header.hideRoots.join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
-html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${app.surfaces.header.hideRoots.map((selector) => `${selector} *`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)} {
+html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${hideRoots.join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
+html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${hideRoots.map((selector) => `${selector} *`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)} {
   opacity: 0 !important;
   visibility: hidden !important;
   transition: none !important;
   animation: none !important;
 }
 
-html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${app.surfaces.header.hideRoots.map((selector) => `${selector}::before`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
-html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${app.surfaces.header.hideRoots.map((selector) => `${selector}::after`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
-html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${app.surfaces.header.hideRoots.map((selector) => `${selector} *::before`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
-html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${app.surfaces.header.hideRoots.map((selector) => `${selector} *::after`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)} {
+html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${hideRoots.map((selector) => `${selector}::before`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
+html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${hideRoots.map((selector) => `${selector}::after`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
+html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${hideRoots.map((selector) => `${selector} *::before`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)},
+html[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] ${hideRoots.map((selector) => `${selector} *::after`).join(`,\nhtml[${ATTR_NAME}="${app.id}"][${CSS_DETECTION_ATTR}="1"] `)} {
   opacity: 0 !important;
   visibility: hidden !important;
   background-image: none !important;
@@ -644,6 +644,10 @@ ${docsScopedRoots}
     return window.setTimeout(callback, Math.max(1000, next.getTime() - now.getTime()));
   }
 
+  function shouldKeepObserverActive({ pauseRule, app, hasBody, hasDocumentElement }) {
+    return !pauseRule && Boolean(app) && Boolean(hasBody) && Boolean(hasDocumentElement);
+  }
+
   function start(context) {
     let started = false;
     let observer = null;
@@ -658,11 +662,12 @@ ${docsScopedRoots}
         reason: reason || "unspecified",
         stylePresent: Boolean(document.getElementById(STYLE_ID))
       });
+      stopObserver();
       document.documentElement?.removeAttribute("data-mgfa-critical-branding");
       document.getElementById(OVERLAY_ID)?.remove();
       document.getElementById(STYLE_ID)?.remove();
       document.documentElement?.removeAttribute(ATTR_NAME);
-        document.documentElement?.removeAttribute(CSS_DETECTION_ATTR);
+      document.documentElement?.removeAttribute(CSS_DETECTION_ATTR);
       clearHeaderMarks();
 
       if (midnightTimer) {
@@ -686,23 +691,21 @@ ${docsScopedRoots}
 
       midnightTimer = scheduleNextMidnight(() => {
         apply();
-        scheduleMidnightRefresh(app);
       });
     }
 
     function apply() {
       const pauseRule = guardsApi.getPauseRule(window.location);
-      if (!document.body || pauseRule) {
-        cleanup(!document.body ? "missing-body" : `paused:${pauseRule.id}`);
-        return;
-      }
-
       const app = getHeaderApp(context.options);
+      const hasBody = Boolean(document.body);
+      const hasDocumentElement = Boolean(document.documentElement);
 
-      if (!app) {
-        cleanup("no-app");
+      if (!shouldKeepObserverActive({ pauseRule, app, hasBody, hasDocumentElement })) {
+        cleanup(!hasBody ? "missing-body" : pauseRule ? `paused:${pauseRule.id}` : "no-app");
         return;
       }
+
+      startObserver();
 
       if (supportsStaticBrandingCss(app) && (hasStaticBrandingTarget() || hasStaticHomeImageTarget(app))) {
         document.getElementById(OVERLAY_ID)?.remove();
@@ -878,6 +881,15 @@ ${docsScopedRoots}
       });
     }
 
+    function stopObserver() {
+      if (!observer) {
+        return;
+      }
+
+      observer.disconnect();
+      observer = null;
+    }
+
     function startSurface() {
       apply();
       if (started) {
@@ -886,7 +898,6 @@ ${docsScopedRoots}
 
       started = true;
       logger.event("surface-started", { readyState: document.readyState });
-      startObserver();
       [200, 500, 1000, 2000, 4000, 7000].forEach((delay) => window.setTimeout(apply, delay));
     }
 
@@ -915,7 +926,8 @@ ${docsScopedRoots}
     rectLooksUsable,
     buildHideCss,
     looksLikeSingleIcon,
-    supportsStaticBrandingCss
+    supportsStaticBrandingCss,
+    shouldKeepObserverActive
   };
 
   if (typeof document !== "undefined" && typeof window !== "undefined") {
