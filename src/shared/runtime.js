@@ -3,7 +3,7 @@
   globalScope.MakeGoogleFlatAgain = namespace;
 
   function getExtensionApi() {
-    return globalScope.chrome || globalScope.browser || null;
+    return globalScope.browser || globalScope.chrome || null;
   }
 
   function getRuntimeUrl(path) {

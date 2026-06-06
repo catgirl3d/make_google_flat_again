@@ -9,13 +9,6 @@
     "48": "assets/extension/icon-48.png",
     "128": "assets/extension/icon-128.png"
   },
-  "permissions": [
-    "declarativeNetRequest",
-    "storage"
-  ],
-  "host_permissions": [
-    "https://www.gstatic.com/*"
-  ],
   "action": {
     "default_title": "Make Google Flat Again",
     "default_icon": {
@@ -24,22 +17,6 @@
       "48": "assets/extension/icon-48.png"
     },
     "default_popup": "src/popup/popup.html"
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "make-google-flat-again@alina.local",
-      "strict_min_version": "109.0"
-    }
-  },
-  "background": {
-    "scripts": [
-      "src/shared/runtime.js",
-      "src/shared/apps.js",
-      "src/shared/settings.js",
-      "src/background/productlogo-dnr.js",
-      "src/background/background.js"
-    ],
-    "service_worker": "src/background/background.js"
   },
   "declarative_net_request": {
     "rule_resources": [
@@ -51,51 +28,6 @@
     ]
   },
   "content_scripts": [
-    {
-      "matches": [
-        "https://drive.google.com/*"
-      ],
-      "css": [
-        "src/content/styles/header-drive.css"
-      ],
-      "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://docs.google.com/document/*"
-      ],
-      "css": [
-        "src/content/styles/header-docs.css"
-      ],
-      "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://docs.google.com/spreadsheets/*"
-      ],
-      "css": [
-        "src/content/styles/header-sheets.css"
-      ],
-      "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://docs.google.com/presentation/*"
-      ],
-      "css": [
-        "src/content/styles/header-slides.css"
-      ],
-      "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://docs.google.com/forms/*"
-      ],
-      "css": [
-        "src/content/styles/header-forms.css"
-      ],
-      "run_at": "document_start"
-    },
     {
       "matches": [
         "https://chat.google.com/*",

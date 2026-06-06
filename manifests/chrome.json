@@ -1,0 +1,15 @@
+{
+  "permissions": [
+    "declarativeNetRequest",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.gstatic.com/*",
+    "https://drive.google.com/*",
+    "https://docs.google.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/background-chrome.js"
+  }
+}
