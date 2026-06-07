@@ -53,6 +53,23 @@
         "src/content/main.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://ogs.google.com/*"
+      ],
+      "all_frames": true,
+      "js": [
+        "src/shared/runtime.js",
+        "src/shared/apps.js",
+        "src/shared/guards.js",
+        "src/shared/settings.js",
+        "src/content/debug-logger.js",
+        "src/content/surface-registry.js",
+        "src/content/surfaces/sidepanel.js",
+        "src/content/main.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
