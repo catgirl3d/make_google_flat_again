@@ -1,6 +1,22 @@
 (function attachApps(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("./runtime.js");
 
+  // Launcher cards reuse shared obfuscated classes, so product identity has to come from href/data-pid.
+  function buildAppLauncherSelectors(dataPid, hrefIncludes) {
+    const hrefSelectorList = (Array.isArray(hrefIncludes) ? hrefIncludes : [hrefIncludes])
+      .filter(Boolean)
+      .map((hrefPart) => `a.tX9u1b[href*="${hrefPart}"] .CgwTDb .MrEfLc`);
+
+    return hrefSelectorList.concat(`a.tX9u1b[data-pid="${dataPid}"] .CgwTDb .MrEfLc`);
+  }
+
+  function createAppLauncherSurface(dataPid, hrefIncludes, iconSize = 40) {
+    return {
+      iconSize,
+      selectors: buildAppLauncherSelectors(dataPid, hrefIncludes)
+    };
+  }
+
   const apps = [
     {
       id: "gmail",
@@ -8,7 +24,8 @@
       asset: { type: "svg", path: "assets/icons/apps/gmail-classic.svg" },
       matches: [{ hostname: "mail.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("23", "mail.google.com")
       }
     },
     {
@@ -18,8 +35,9 @@
       matches: [{ hostname: "calendar.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
         favicon: { hardLock: true },
+        appLauncher: createAppLauncherSurface("24", "calendar.google.com"),
         sidePanel: {
-          iconSize: 24,
+          iconSize: 20,
           selectors: [
             '.app-switcher-button[data-guest-app-id="6"] .app-switcher-button-icon-container',
             '[data-guest-app-id="6"] .app-switcher-button-icon-container',
@@ -38,7 +56,8 @@
       asset: { type: "svg", path: "assets/icons/apps/drive-classic.svg" },
       matches: [{ hostname: "drive.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("49", "drive.google.com")
       }
     },
     {
@@ -48,7 +67,8 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/document/"] }],
       urlIncludes: ["docs.google.com/document"],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("25", "docs.google.com/document")
       }
     },
     {
@@ -58,7 +78,8 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/spreadsheets/"] }],
       urlIncludes: ["docs.google.com/spreadsheets"],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("283", "docs.google.com/spreadsheets")
       }
     },
     {
@@ -68,7 +89,8 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/presentation/"] }],
       urlIncludes: ["docs.google.com/presentation"],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("281", "docs.google.com/presentation")
       }
     },
     {
@@ -78,7 +100,18 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/forms/"] }],
       urlIncludes: ["docs.google.com/forms"],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("330", "docs.google.com/forms")
+      }
+    },
+    {
+      id: "vids",
+      label: "Google Vids",
+      asset: { type: "svg", path: "assets/icons/apps/vids-classic.svg" },
+      matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/videos/"] }],
+      urlIncludes: ["docs.google.com/videos"],
+      surfaces: {
+        appLauncher: createAppLauncherSurface("682", "docs.google.com/videos")
       }
     },
     {
@@ -87,7 +120,8 @@
       asset: { type: "svg", path: "assets/icons/apps/meet-classic.svg" },
       matches: [{ hostname: "meet.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("411", "meet.google.com")
       }
     },
     {
@@ -96,7 +130,8 @@
       asset: { type: "svg", path: "assets/icons/apps/chat-classic.svg" },
       matches: [{ hostname: "chat.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {}
+        favicon: {},
+        appLauncher: createAppLauncherSurface("385", "chat.google.com")
       }
     },
     {
@@ -106,8 +141,10 @@
       matches: [{ hostname: "keep.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
         favicon: {},
+        appLauncher: createAppLauncherSurface("136", "keep.google.com"),
         sidePanel: {
-          iconSize: 24,
+          assetPath: "assets/icons/apps/keep-classic-square.svg",
+          iconSize: 20,
           selectors: [
             '.app-switcher-button[data-guest-app-id="2"] .app-switcher-button-icon-container',
             '[data-guest-app-id="2"] .app-switcher-button-icon-container',
@@ -116,6 +153,28 @@
             '[style*="keep_2026_2x"]',
             '.Yb-Il-d-c-j[style*="keep_"]',
             '.aT5-aOt-I-JX-Jw[style*="keep_"]'
+          ]
+        }
+      }
+    },
+    {
+      id: "tasks",
+      label: "Google Tasks",
+      asset: { type: "svg", path: "assets/icons/apps/tasks-classic.svg" },
+      matches: [{ hostname: "tasks.google.com", pathnamePrefixes: ["/tasks"] }],
+      urlIncludes: ["tasks.google.com/tasks"],
+      surfaces: {
+        appLauncher: createAppLauncherSurface("39", "tasks.google.com/tasks"),
+        sidePanel: {
+          iconSize: 20,
+          selectors: [
+            '.app-switcher-button[data-guest-app-id="4"] .app-switcher-button-icon-container',
+            '[data-guest-app-id="4"] .app-switcher-button-icon-container',
+            '.app-switcher-button-icon-container[style*="tasks_"]',
+            '[style*="/companion/icon_assets/tasks_"]',
+            '[style*="tasks_2026_2x"]',
+            '.Yb-Il-d-c-j[style*="tasks_"]',
+            '.aT5-aOt-I-JX-Jw[style*="tasks_"]'
           ]
         }
       }
@@ -131,8 +190,9 @@
       urlIncludes: ["www.google.com/maps"],
       surfaces: {
         favicon: { hardLock: true },
+        appLauncher: createAppLauncherSurface("8", ["maps.google.com", "www.google.com/maps"]),
         sidePanel: {
-          iconSize: 24,
+          iconSize: 20,
           selectors: [
             '.app-switcher-button[data-guest-app-id="8"] .app-switcher-button-icon-container',
             '[data-guest-app-id="8"] .app-switcher-button-icon-container',
