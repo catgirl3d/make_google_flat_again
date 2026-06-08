@@ -2,11 +2,13 @@ a[href="#inbox"] > img[src*="logo_gmail_lockup_default_"],
 a[href="#inbox"] > img[srcset*="logo_gmail_lockup_default_"],
 img[src*="/icons/mail/rfr/logo_gmail_lockup_default_"],
 img[srcset*="/icons/mail/rfr/logo_gmail_lockup_default_"] {
+  --mgfa-logo-source: "header-gmail-lockup";
   content: url("../../../assets/icons/apps/logo_gmail_lockup_default_1x_r7.png") !important;
 }
 
 #loading img[src*="/icons/mail/logo_loading"],
 #loading img[srcset*="/icons/mail/logo_loading"] {
+  --mgfa-logo-source: "header-gmail-loading";
   content: url("../../../assets/icons/apps/gmail-classic.svg") !important;
   object-fit: contain !important;
   object-position: center !important;
