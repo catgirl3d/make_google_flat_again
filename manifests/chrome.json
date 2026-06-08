@@ -5,6 +5,7 @@
   ],
   "host_permissions": [
     "https://mail.google.com/*",
+    "https://tasks.google.com/*",
     "https://drive.google.com/*",
     "https://docs.google.com/*"
   ],

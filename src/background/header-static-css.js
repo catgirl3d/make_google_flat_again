@@ -11,6 +11,13 @@
       runAt: "document_start"
     }),
     Object.freeze({
+      appId: "tasks",
+      id: "mgfa-header-tasks",
+      matches: Object.freeze(["https://tasks.google.com/*"]),
+      cssFile: "src/content/styles/header-tasks.css",
+      runAt: "document_start"
+    }),
+    Object.freeze({
       appId: "drive",
       id: "mgfa-header-drive",
       matches: Object.freeze(["https://drive.google.com/*"]),
@@ -48,6 +55,14 @@
   ]);
   const MANAGED_SCRIPT_IDS = Object.freeze(HEADER_SCRIPT_DEFINITIONS.map((definition) => definition.id));
 
+  function getActiveHeaderDefinitionsFromNormalized(normalizedOptions) {
+    if (normalizedOptions.enabled === false) {
+      return [];
+    }
+
+    return HEADER_SCRIPT_DEFINITIONS.filter((definition) => normalizedOptions.apps[definition.appId] !== false);
+  }
+
   function buildContentScript(definition) {
     return {
       id: definition.id,
@@ -58,13 +73,7 @@
   }
 
   function buildContentScriptsFromNormalized(normalizedOptions) {
-    if (normalizedOptions.enabled === false) {
-      return [];
-    }
-
-    return HEADER_SCRIPT_DEFINITIONS
-      .filter((definition) => normalizedOptions.apps[definition.appId] !== false)
-      .map((definition) => buildContentScript(definition));
+    return getActiveHeaderDefinitionsFromNormalized(normalizedOptions).map((definition) => buildContentScript(definition));
   }
 
   function buildContentScripts(options) {

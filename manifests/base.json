@@ -23,6 +23,7 @@
       "matches": [
         "https://chat.google.com/*",
         "https://keep.google.com/*",
+        "https://tasks.google.com/*",
         "https://drive.google.com/*",
         "https://docs.google.com/*",
         "https://mail.google.com/*",
@@ -72,6 +73,7 @@
       "matches": [
         "https://chat.google.com/*",
         "https://keep.google.com/*",
+        "https://tasks.google.com/*",
         "https://drive.google.com/*",
         "https://docs.google.com/*",
         "https://mail.google.com/*",
@@ -79,7 +81,6 @@
         "https://maps.google.com/*",
         "https://meet.google.com/*",
         "https://ogs.google.com/*",
-        "https://www.gstatic.com/*",
         "https://www.google.com/maps*",
         "https://www.google.com/maps/*"
       ]

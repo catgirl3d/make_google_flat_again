@@ -1,0 +1,5 @@
+img[src*="/images/branding/productlogos/tasks_2026/"],
+img[srcset*="/images/branding/productlogos/tasks_2026/"] {
+  --mgfa-logo-source: "header-tasks";
+  content: url("../../../assets/icons/apps/tasks-classic.svg") !important;
+}
