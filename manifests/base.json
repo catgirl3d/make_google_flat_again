@@ -35,6 +35,7 @@
       ],
       "js": [
         "src/shared/runtime.js",
+        "src/shared/app-registry.js",
         "src/shared/apps.js",
         "src/shared/guards.js",
         "src/shared/settings.js",
@@ -54,6 +55,7 @@
       "all_frames": true,
       "js": [
         "src/shared/runtime.js",
+        "src/shared/app-registry.js",
         "src/shared/apps.js",
         "src/shared/guards.js",
         "src/shared/settings.js",

@@ -6,6 +6,7 @@ const { apps } = require("../src/shared/apps.js");
 const MAIN_PATH = "../src/content/main.js";
 const MODULES_TO_RESET = [
   "../src/shared/runtime.js",
+  "../src/shared/app-registry.js",
   "../src/shared/apps.js",
   "../src/shared/settings.js",
   "../src/shared/guards.js",
@@ -133,6 +134,7 @@ function createPageEnvironment({ location, readyState = "complete" }) {
   resetGlobals();
 
   const runtime = require("../src/shared/runtime.js");
+  const registryApi = require("../src/shared/app-registry.js");
   const appsApi = require("../src/shared/apps.js");
   const settingsApi = require("../src/shared/settings.js");
   const guardsApi = require("../src/shared/guards.js");
@@ -186,6 +188,7 @@ function createPageEnvironment({ location, readyState = "complete" }) {
         return extensionApi;
       }
     },
+    appRegistry: registryApi,
     apps: appsApi,
     guards: guardsApi,
     settings: {

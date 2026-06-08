@@ -1,57 +1,19 @@
 (function attachHeaderStaticCss(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../shared/runtime.js");
+  const appsApi = globalScope.MakeGoogleFlatAgain?.apps || require("../shared/apps.js");
   const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../shared/settings.js");
-  const HEADER_SCRIPT_DEFINITIONS = Object.freeze([
-    Object.freeze({
-      appId: "gmail",
-      id: "mgfa-header-gmail",
-      matches: Object.freeze(["https://mail.google.com/*"]),
-      cssFile: "src/content/styles/header-gmail.css",
-      runAt: "document_start"
-    }),
-    Object.freeze({
-      appId: "tasks",
-      id: "mgfa-header-tasks",
-      matches: Object.freeze(["https://tasks.google.com/*"]),
-      cssFile: "src/content/styles/header-tasks.css",
-      runAt: "document_start"
-    }),
-    Object.freeze({
-      appId: "drive",
-      id: "mgfa-header-drive",
-      matches: Object.freeze(["https://drive.google.com/*"]),
-      cssFile: "src/content/styles/header-drive.css",
-      runAt: "document_start"
-    }),
-    Object.freeze({
-      appId: "docs",
-      id: "mgfa-header-docs",
-      matches: Object.freeze(["https://docs.google.com/document/*"]),
-      cssFile: "src/content/styles/header-docs.css",
-      runAt: "document_start"
-    }),
-    Object.freeze({
-      appId: "sheets",
-      id: "mgfa-header-sheets",
-      matches: Object.freeze(["https://docs.google.com/spreadsheets/*"]),
-      cssFile: "src/content/styles/header-sheets.css",
-      runAt: "document_start"
-    }),
-    Object.freeze({
-      appId: "slides",
-      id: "mgfa-header-slides",
-      matches: Object.freeze(["https://docs.google.com/presentation/*"]),
-      cssFile: "src/content/styles/header-slides.css",
-      runAt: "document_start"
-    }),
-    Object.freeze({
-      appId: "forms",
-      id: "mgfa-header-forms",
-      matches: Object.freeze(["https://docs.google.com/forms/*"]),
-      cssFile: "src/content/styles/header-forms.css",
-      runAt: "document_start"
+  const HEADER_SCRIPT_DEFINITIONS = Object.freeze(
+    appsApi.getAppsWithManagedFeature("headerStaticCss").map((app) => {
+      const feature = app.managed.headerStaticCss;
+      return Object.freeze({
+        appId: app.id,
+        id: feature.scriptId,
+        matches: Object.freeze([...feature.matches]),
+        cssFile: feature.cssFile,
+        runAt: feature.runAt
+      });
     })
-  ]);
+  );
   const MANAGED_SCRIPT_IDS = Object.freeze(HEADER_SCRIPT_DEFINITIONS.map((definition) => definition.id));
 
   function getActiveHeaderDefinitionsFromNormalized(normalizedOptions) {

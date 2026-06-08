@@ -6,11 +6,13 @@ function loadHeaderStaticCss(registry) {
   delete globalThis.__MGFA_RUNTIME__;
 
   delete require.cache[require.resolve("../src/shared/runtime.js")];
+  delete require.cache[require.resolve("../src/shared/app-registry.js")];
   delete require.cache[require.resolve("../src/shared/apps.js")];
   delete require.cache[require.resolve("../src/shared/settings.js")];
   delete require.cache[require.resolve("../src/background/header-static-css.js")];
 
   const runtime = require("../src/shared/runtime.js");
+  require("../src/shared/app-registry.js");
   require("../src/shared/apps.js");
   require("../src/shared/settings.js");
 
@@ -32,12 +34,6 @@ test("header static css definitions cover Gmail, Tasks, Drive, and the docs suit
         id: "mgfa-header-gmail",
         matches: ["https://mail.google.com/*"],
         cssFile: "src/content/styles/header-gmail.css"
-      },
-      {
-        appId: "tasks",
-        id: "mgfa-header-tasks",
-        matches: ["https://tasks.google.com/*"],
-        cssFile: "src/content/styles/header-tasks.css"
       },
       {
         appId: "drive",
@@ -68,6 +64,12 @@ test("header static css definitions cover Gmail, Tasks, Drive, and the docs suit
         id: "mgfa-header-forms",
         matches: ["https://docs.google.com/forms/*"],
         cssFile: "src/content/styles/header-forms.css"
+      },
+      {
+        appId: "tasks",
+        id: "mgfa-header-tasks",
+        matches: ["https://tasks.google.com/*"],
+        cssFile: "src/content/styles/header-tasks.css"
       }
     ]
   );
@@ -79,12 +81,12 @@ test("buildContentScripts returns every managed header CSS script by default", (
 
   assert.deepEqual(scripts.map((script) => script.id), [
     "mgfa-header-gmail",
-    "mgfa-header-tasks",
     "mgfa-header-drive",
     "mgfa-header-docs",
     "mgfa-header-sheets",
     "mgfa-header-slides",
-    "mgfa-header-forms"
+    "mgfa-header-forms",
+    "mgfa-header-tasks"
   ]);
 });
 
@@ -133,20 +135,20 @@ test("sync forwards managed ids and desired scripts to the platform registry", a
   assert.deepEqual(calls[0].managedIds, headerStaticCss.MANAGED_SCRIPT_IDS);
   assert.deepEqual(calls[0].desiredScripts.map((script) => script.id), [
     "mgfa-header-gmail",
-    "mgfa-header-tasks",
     "mgfa-header-drive",
     "mgfa-header-sheets",
     "mgfa-header-slides",
-    "mgfa-header-forms"
+    "mgfa-header-forms",
+    "mgfa-header-tasks"
   ]);
-  assert.deepEqual(result.activeAppIds, ["gmail", "tasks", "drive", "sheets", "slides", "forms"]);
+  assert.deepEqual(result.activeAppIds, ["gmail", "drive", "sheets", "slides", "forms", "tasks"]);
   assert.deepEqual(result.desiredScriptIds, [
     "mgfa-header-gmail",
-    "mgfa-header-tasks",
     "mgfa-header-drive",
     "mgfa-header-sheets",
     "mgfa-header-slides",
-    "mgfa-header-forms"
+    "mgfa-header-forms",
+    "mgfa-header-tasks"
   ]);
   assert.equal(result.options.apps.docs, false);
 });
@@ -163,23 +165,23 @@ test("sync reports skipped when content script registry is unavailable", async (
 
   assert.equal(result.skipped, true);
   assert.deepEqual(result.managedIds, headerStaticCss.MANAGED_SCRIPT_IDS);
-  assert.deepEqual(result.activeAppIds, ["gmail", "tasks", "drive", "docs", "sheets", "slides", "forms"]);
+  assert.deepEqual(result.activeAppIds, ["gmail", "drive", "docs", "sheets", "slides", "forms", "tasks"]);
   assert.deepEqual(result.desiredScriptIds, [
     "mgfa-header-gmail",
-    "mgfa-header-tasks",
     "mgfa-header-drive",
     "mgfa-header-docs",
     "mgfa-header-sheets",
     "mgfa-header-slides",
-    "mgfa-header-forms"
+    "mgfa-header-forms",
+    "mgfa-header-tasks"
   ]);
   assert.deepEqual(result.desiredScripts.map((script) => script.id), [
     "mgfa-header-gmail",
-    "mgfa-header-tasks",
     "mgfa-header-drive",
     "mgfa-header-docs",
     "mgfa-header-sheets",
     "mgfa-header-slides",
-    "mgfa-header-forms"
+    "mgfa-header-forms",
+    "mgfa-header-tasks"
   ]);
 });

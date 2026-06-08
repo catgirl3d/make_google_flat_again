@@ -1,6 +1,7 @@
 if (typeof importScripts === "function") {
   importScripts(
     "../shared/runtime.js",
+    "../shared/app-registry.js",
     "../shared/apps.js",
     "../shared/settings.js",
     "../platform/content-script-registry-core.js",

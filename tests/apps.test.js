@@ -7,6 +7,7 @@ const {
   findMatchingApps,
   getAppById,
   getAppsWithSurface,
+  getAppsWithManagedFeature,
   getAssetPath,
   buildCalendarAssetPath
 } = require("../src/shared/apps.js");
@@ -147,5 +148,36 @@ test("app launcher selectors match products by href and pid instead of localized
 test("apps config no longer carries late header runtime metadata", () => {
   for (const app of apps) {
     assert.equal(Boolean(app.surfaces?.header), false);
+  }
+});
+
+test("managed features registry returns expected apps and features", () => {
+  const appsWithHeader = getAppsWithManagedFeature("headerStaticCss");
+  assert.deepEqual(
+    appsWithHeader.map((app) => app.id),
+    ["gmail", "drive", "docs", "sheets", "slides", "forms", "tasks"]
+  );
+
+  for (const app of appsWithHeader) {
+    const config = app.managed.headerStaticCss;
+    assert.ok(config.scriptId.startsWith("mgfa-header-"));
+    assert.ok(Array.isArray(config.matches));
+    assert.ok(config.cssFile.endsWith(".css"));
+    assert.equal(config.runAt, "document_start");
+  }
+});
+
+test("apps config carries expected managed properties under recommended schema", () => {
+  for (const app of apps) {
+    if (app.managed) {
+      assert.ok(typeof app.managed === "object" && !Array.isArray(app.managed));
+      if (app.managed.headerStaticCss) {
+        const h = app.managed.headerStaticCss;
+        assert.equal(typeof h.scriptId, "string");
+        assert.ok(Array.isArray(h.matches));
+        assert.equal(typeof h.cssFile, "string");
+        assert.equal(h.runAt, "document_start");
+      }
+    }
   }
 });

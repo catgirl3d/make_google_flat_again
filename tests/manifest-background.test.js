@@ -8,6 +8,7 @@ const PROJECT_ROOT = path.join(__dirname, "..");
 
 const EXPECTED_FIREFOX_BACKGROUND_SCRIPTS = [
   "src/shared/runtime.js",
+  "src/shared/app-registry.js",
   "src/shared/apps.js",
   "src/shared/settings.js",
   "src/platform/content-script-registry-core.js",
@@ -18,6 +19,7 @@ const EXPECTED_FIREFOX_BACKGROUND_SCRIPTS = [
 
 const EXPECTED_CHROME_IMPORT_SCRIPTS = [
   "../shared/runtime.js",
+  "../shared/app-registry.js",
   "../shared/apps.js",
   "../shared/settings.js",
   "../platform/content-script-registry-core.js",
@@ -28,6 +30,7 @@ const EXPECTED_CHROME_IMPORT_SCRIPTS = [
 
 const EXPECTED_PRIMARY_CONTENT_SCRIPT_JS = [
   "src/shared/runtime.js",
+  "src/shared/app-registry.js",
   "src/shared/apps.js",
   "src/shared/guards.js",
   "src/shared/settings.js",
@@ -41,6 +44,7 @@ const EXPECTED_PRIMARY_CONTENT_SCRIPT_JS = [
 
 const EXPECTED_OGS_IFRAME_CONTENT_SCRIPT_JS = [
   "src/shared/runtime.js",
+  "src/shared/app-registry.js",
   "src/shared/apps.js",
   "src/shared/guards.js",
   "src/shared/settings.js",
@@ -62,10 +66,17 @@ function getChromeImportScripts() {
   return [...importScriptsCall[1].matchAll(/"([^"]+)"/g)].map((match) => match[1]);
 }
 
+function assertNoDnrConfig(manifest) {
+  assert.equal(Object.prototype.hasOwnProperty.call(manifest, "declarative_net_request"), false);
+  assert.equal(manifest.permissions.includes("declarativeNetRequest"), false);
+  assert.equal(manifest.permissions.includes("declarativeNetRequestFeedback"), false);
+}
+
 test("built Firefox manifest keeps Firefox-only background wiring and dynamic header CSS permissions", () => {
   const manifest = buildManifest("firefox");
 
   assert.equal(manifest.manifest_version, 3);
+  assertNoDnrConfig(manifest);
   assert.deepEqual(manifest.background.scripts, EXPECTED_FIREFOX_BACKGROUND_SCRIPTS);
   assert.equal(Object.prototype.hasOwnProperty.call(manifest.background, "service_worker"), false);
   assert.equal(manifest.permissions.includes("scripting"), true);
@@ -84,6 +95,7 @@ test("built Firefox manifest keeps Firefox-only background wiring and dynamic he
 test("built Chrome manifest keeps Chrome-only background wiring and scripting permission", () => {
   const manifest = buildManifest("chrome");
 
+  assertNoDnrConfig(manifest);
   assert.equal(manifest.background.service_worker, "src/background/background-chrome.js");
   assert.deepEqual(getChromeImportScripts(), EXPECTED_CHROME_IMPORT_SCRIPTS);
   assert.equal(Object.prototype.hasOwnProperty.call(manifest.background, "scripts"), false);
