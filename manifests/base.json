@@ -18,15 +18,6 @@
     },
     "default_popup": "src/popup/popup.html"
   },
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "dnr-placeholder",
-        "enabled": true,
-        "path": "src/background/dnr-placeholder.json"
-      }
-    ]
-  },
   "content_scripts": [
     {
       "matches": [

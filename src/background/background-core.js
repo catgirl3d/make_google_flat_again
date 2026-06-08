@@ -29,15 +29,7 @@
   function syncOptions(options) {
     const tasks = [];
 
-    if (extensionApi?.declarativeNetRequest && extension.productlogoDnr?.sync) {
-      tasks.push(
-        Promise.resolve(extension.productlogoDnr.sync(extensionApi, options)).catch((error) => {
-          reportSyncError("productlogo DNR", error);
-        })
-      );
-    }
-
-    if (extension.headerStaticCss?.sync && extension.contentScriptRegistry?.syncManagedCssScripts) {
+    if (extension.headerStaticCss?.sync) {
       tasks.push(
         Promise.resolve(extension.headerStaticCss.sync(extensionApi, options)).catch((error) => {
           reportSyncError("header static CSS", error);

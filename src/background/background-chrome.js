@@ -5,7 +5,6 @@ if (typeof importScripts === "function") {
     "../shared/settings.js",
     "../platform/content-script-registry-core.js",
     "../platform/chrome/content-script-registry.js",
-    "./productlogo-dnr.js",
     "./header-static-css.js",
     "./background-core.js"
   );
