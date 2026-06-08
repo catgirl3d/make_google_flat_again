@@ -48,23 +48,33 @@ Source manifests live in `manifests/`:
 
 Fast path for local validation and packaging:
 
-```powershell
+```bash
 npm run build
 ```
 
 Build a target manifest into a staging directory:
 
-```powershell
+```bash
 node scripts/build-manifest.js firefox dist/firefox-package
 node scripts/build-manifest.js chrome dist/chrome-package
 ```
 
 Build packaged extension artifacts:
 
-```powershell
-powershell -File scripts/package-firefox.ps1
-powershell -File scripts/package-chrome.ps1
+```bash
+npm run package:firefox
+npm run package:chrome
 ```
+
+Canonical reviewer-friendly Firefox rebuild path:
+
+```bash
+npm ci --ignore-scripts
+npm run package:firefox
+```
+
+PowerShell scripts remain available only as optional Windows compatibility wrappers.
+The repository also pins exact npm versions in `package-lock.json` and blocks install scripts via `.npmrc`.
 
 Output artifacts:
 
@@ -80,13 +90,13 @@ Staging directories:
 
 Run tests:
 
-```powershell
+```bash
 npm test
 ```
 
 The direct Node command still works too:
 
-```powershell
+```bash
 node --test tests/*.test.js
 ```
 
@@ -99,7 +109,7 @@ node --test tests/*.test.js
 
 Load temporary Firefox build:
 
-1. Run `powershell -File scripts/package-firefox.ps1`
+1. Run `npm run package:firefox`
 2. Open `about:debugging#/runtime/this-firefox`
 3. Choose `Load Temporary Add-on`
 4. Select `dist/firefox-package/manifest.json`
@@ -108,7 +118,7 @@ For store submission, upload packaged files from `dist/`.
 
 ## Runtime Notes
 
-- Favicon and sidepanel replacements are regular manifest content scripts.
+- Favicon and app icon surface replacements are regular manifest content scripts.
 - Header/logo replacements are settings-aware dynamic registrations managed from background code.
 - After changing extension settings or reloading the extension, header/logo changes are guaranteed for new navigations and page reloads.
 - Already-open pages may need a manual reload to pick up header/logo changes. This is expected with the current architecture.

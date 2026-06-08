@@ -3,4 +3,14 @@ param(
 )
 
 $packageScript = Join-Path $PSScriptRoot "package-extension.ps1"
-& $packageScript -Target firefox -OutputName $OutputName
+$packageArgs = @("-Target", "firefox")
+
+if (-not [string]::IsNullOrWhiteSpace($OutputName)) {
+  $packageArgs += @("-OutputName", $OutputName)
+}
+
+& $packageScript @packageArgs
+
+if (-not $?) {
+  exit $LASTEXITCODE
+}
