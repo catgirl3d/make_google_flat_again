@@ -1,7 +1,9 @@
 (function attachApps(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("./runtime.js");
 
-  // Launcher cards reuse shared obfuscated classes, so product identity has to come from href/data-pid.
+  // Google app launcher cards reuse shared obfuscated classes, so product identity has to come from
+  // href/data-pid. These data-pid values are taken from the live launcher DOM (`a.tX9u1b[data-pid]`)
+  // and should be re-verified in DevTools against the matching href when Google changes launcher markup.
   function buildAppLauncherSelectors(dataPid, hrefIncludes) {
     const hrefSelectorList = (Array.isArray(hrefIncludes) ? hrefIncludes : [hrefIncludes])
       .filter(Boolean)

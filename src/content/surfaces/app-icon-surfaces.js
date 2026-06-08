@@ -1,15 +1,16 @@
-(function attachSidePanelSurface(globalScope) {
+(function attachAppIconSurfaces(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../../shared/runtime.js");
   const appsApi = globalScope.MakeGoogleFlatAgain?.apps || require("../../shared/apps.js");
   const debugApi = globalScope.MakeGoogleFlatAgain?.debugLogger || require("../debug-logger.js");
   const guardsApi = globalScope.MakeGoogleFlatAgain?.guards || require("../../shared/guards.js");
   const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../../shared/settings.js");
   const surfaceRegistry = globalScope.MakeGoogleFlatAgain?.surfaceRegistry || require("../surface-registry.js");
-  const logger = debugApi.create("sidepanel");
+  const logger = debugApi.create("app-icon-surfaces");
 
-  const STYLE_ID = "mgfa-sidepanel-style";
-  const ATTR_NAME = "data-mgfa-sidepanel";
-  const MANAGED_SURFACE_NAMES = ["sidePanel", "appLauncher", "docsHomescreenMenu"];
+  const STYLE_ID = "mgfa-app-icon-surfaces-style";
+  const ATTR_NAME = "data-mgfa-app-icon-surfaces";
+  // These selectors share one style element and refresh cycle, so they stay in one runtime surface.
+  const APP_ICON_SURFACE_NAMES = ["sidePanel", "appLauncher", "docsHomescreenMenu"];
 
   function escapeCssUrl(url) {
     return String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -97,7 +98,7 @@ ${beforeSelectors} {
     const enabledSurfaceEntries = [];
     const seenAppIds = new Set();
 
-    for (const surfaceName of MANAGED_SURFACE_NAMES) {
+    for (const surfaceName of APP_ICON_SURFACE_NAMES) {
       const surfaceCss = buildSurfaceCss(surfaceName, options).trim();
 
       if (surfaceCss) {
@@ -204,7 +205,7 @@ ${beforeSelectors} {
   }
 
   const api = {
-    name: "sidepanel",
+    name: "app-icon-surfaces",
     start,
     escapeCssUrl,
     buildSidePanelCss,
