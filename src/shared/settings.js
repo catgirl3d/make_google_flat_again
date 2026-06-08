@@ -38,6 +38,15 @@
     return null;
   }
 
+  function warnAndGetDefaultOptions(error, extensionApi) {
+    const areaName = getStorageAreaName(extensionApi) || "unknown";
+    globalScope.console?.warn(
+      `[mgfa/settings] Failed to load options from ${areaName} storage. Using defaults.`,
+      error
+    );
+    return normalizeOptions(DEFAULT_OPTIONS);
+  }
+
   function getOptions(extensionApi) {
     const storageArea = getStorageArea(extensionApi);
 
@@ -51,23 +60,24 @@
       if (storageArea.get.length < 2) {
         return Promise.resolve(storageArea.get(query))
           .then((result) => normalizeOptions(result?.[STORAGE_KEY]))
-          .catch(() => normalizeOptions(DEFAULT_OPTIONS));
+          .catch((error) => warnAndGetDefaultOptions(error, extensionApi));
       }
 
       return new Promise((resolve) => {
         storageArea.get(query, (result) => {
           const api = extensionApi || runtime.getExtensionApi();
+          const lastError = api?.runtime?.lastError;
 
-          if (api?.runtime?.lastError) {
-            resolve(normalizeOptions(DEFAULT_OPTIONS));
+          if (lastError) {
+            resolve(warnAndGetDefaultOptions(lastError, api));
             return;
           }
 
           resolve(normalizeOptions(result?.[STORAGE_KEY]));
         });
       });
-    } catch (_) {
-      return Promise.resolve(normalizeOptions(DEFAULT_OPTIONS));
+    } catch (error) {
+      return Promise.resolve(warnAndGetDefaultOptions(error, extensionApi));
     }
   }
 
