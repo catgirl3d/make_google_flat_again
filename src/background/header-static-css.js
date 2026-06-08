@@ -4,6 +4,13 @@
 
   const HEADER_SCRIPT_DEFINITIONS = Object.freeze([
     Object.freeze({
+      appId: "gmail",
+      id: "mgfa-header-gmail",
+      matches: Object.freeze(["https://mail.google.com/*"]),
+      cssFile: "src/content/styles/header-gmail.css",
+      runAt: "document_start"
+    }),
+    Object.freeze({
       appId: "drive",
       id: "mgfa-header-drive",
       matches: Object.freeze(["https://drive.google.com/*"]),
