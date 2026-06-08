@@ -1,0 +1,17 @@
+{
+  "name": "make-google-flat-again",
+  "private": true,
+  "description": "Build and packaging commands for the Make Google Flat Again extension.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build:manifest:firefox": "node scripts/build-manifest.js firefox dist/firefox-package",
+    "build:manifest:chrome": "node scripts/build-manifest.js chrome dist/chrome-package",
+    "package:firefox": "powershell -ExecutionPolicy Bypass -File scripts/package-firefox.ps1",
+    "package:chrome": "powershell -ExecutionPolicy Bypass -File scripts/package-chrome.ps1",
+    "package": "npm run package:firefox && npm run package:chrome",
+    "build": "npm run test && npm run package"
+  }
+}
