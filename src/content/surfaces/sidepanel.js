@@ -9,7 +9,7 @@
 
   const STYLE_ID = "mgfa-sidepanel-style";
   const ATTR_NAME = "data-mgfa-sidepanel";
-  const MANAGED_SURFACE_NAMES = ["sidePanel", "appLauncher"];
+  const MANAGED_SURFACE_NAMES = ["sidePanel", "appLauncher", "docsHomescreenMenu"];
 
   function escapeCssUrl(url) {
     return String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -35,6 +35,34 @@ ${selectors} {
 `.trim();
   }
 
+  function buildDocsHomescreenMenuRule(app) {
+    const surfaceConfig = app.surfaces.docsHomescreenMenu;
+    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, "docsHomescreenMenu")));
+    const iconSize = `${surfaceConfig.iconSize || 24}px`;
+    const selectors = surfaceConfig.selectors.join(",\n");
+    const beforeSelectors = surfaceConfig.selectors
+      .map((selector) => `${selector}::before`)
+      .join(",\n");
+
+    return `
+${selectors} {
+  background-image: url("${iconUrl}") !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: ${iconSize} ${iconSize} !important;
+  display: block !important;
+  width: ${iconSize} !important;
+  height: ${iconSize} !important;
+  left: 0 !important;
+  top: 0 !important;
+}
+
+${beforeSelectors} {
+  content: "" !important;
+}
+`.trim();
+  }
+
   function getEnabledSurfaceApps(surfaceName, options) {
     return appsApi
       .getAppsWithSurface(surfaceName)
@@ -42,8 +70,12 @@ ${selectors} {
   }
 
   function buildSurfaceCss(surfaceName, options) {
+    const ruleBuilder = surfaceName === "docsHomescreenMenu"
+      ? buildDocsHomescreenMenuRule
+      : buildReplacementRule;
+
     return getEnabledSurfaceApps(surfaceName, options)
-      .map((app) => buildReplacementRule(app, surfaceName))
+      .map((app) => ruleBuilder(app, surfaceName))
       .join("\n\n");
   }
 
@@ -53,6 +85,10 @@ ${selectors} {
 
   function buildAppLauncherCss(options) {
     return buildSurfaceCss("appLauncher", options);
+  }
+
+  function buildDocsHomescreenMenuCss(options) {
+    return buildSurfaceCss("docsHomescreenMenu", options);
   }
 
   function buildManagedSurfaceState(options) {
@@ -172,7 +208,8 @@ ${selectors} {
     start,
     escapeCssUrl,
     buildSidePanelCss,
-    buildAppLauncherCss
+    buildAppLauncherCss,
+    buildDocsHomescreenMenuCss
   };
 
   surfaceRegistry.register(api);

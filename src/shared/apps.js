@@ -17,6 +17,13 @@
     };
   }
 
+  function createDocsHomescreenMenuSurface(spriteClassName, iconSize = 24) {
+    return {
+      iconSize,
+      selectors: [`.docs-homescreen-leftmenu .docs-homescreen-img.${spriteClassName}`]
+    };
+  }
+
   const apps = [
     {
       id: "gmail",
@@ -57,7 +64,8 @@
       matches: [{ hostname: "drive.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
         favicon: {},
-        appLauncher: createAppLauncherSurface("49", "drive.google.com")
+        appLauncher: createAppLauncherSurface("49", "drive.google.com"),
+        docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-drive-2026-24")
       }
     },
     {
@@ -68,7 +76,8 @@
       urlIncludes: ["docs.google.com/document"],
       surfaces: {
         favicon: {},
-        appLauncher: createAppLauncherSurface("25", "docs.google.com/document")
+        appLauncher: createAppLauncherSurface("25", "docs.google.com/document"),
+        docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-docs-2026-24")
       }
     },
     {
@@ -79,7 +88,8 @@
       urlIncludes: ["docs.google.com/spreadsheets"],
       surfaces: {
         favicon: {},
-        appLauncher: createAppLauncherSurface("283", "docs.google.com/spreadsheets")
+        appLauncher: createAppLauncherSurface("283", "docs.google.com/spreadsheets"),
+        docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-sheets-2026-24")
       }
     },
     {
@@ -90,7 +100,8 @@
       urlIncludes: ["docs.google.com/presentation"],
       surfaces: {
         favicon: {},
-        appLauncher: createAppLauncherSurface("281", "docs.google.com/presentation")
+        appLauncher: createAppLauncherSurface("281", "docs.google.com/presentation"),
+        docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-slides-2026-24")
       }
     },
     {
@@ -101,7 +112,8 @@
       urlIncludes: ["docs.google.com/forms"],
       surfaces: {
         favicon: {},
-        appLauncher: createAppLauncherSurface("330", "docs.google.com/forms")
+        appLauncher: createAppLauncherSurface("330", "docs.google.com/forms"),
+        docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-forms-2026-24")
       }
     },
     {
@@ -111,7 +123,8 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/videos/"] }],
       urlIncludes: ["docs.google.com/videos"],
       surfaces: {
-        appLauncher: createAppLauncherSurface("682", "docs.google.com/videos")
+        appLauncher: createAppLauncherSurface("682", "docs.google.com/videos"),
+        docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-vids-2026-24")
       }
     },
     {
