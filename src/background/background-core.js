@@ -18,6 +18,21 @@
     console.warn(`[mgfa/background] ${label} sync failed`, error);
   }
 
+  function reportSyncResult(label, payload) {
+    console.log(`[mgfa/background] ${label} sync`, payload);
+  }
+
+  function summarizeHeaderStaticCssSync(result) {
+    return {
+      activeAppIds: Array.isArray(result?.activeAppIds) ? result.activeAppIds : [],
+      addedIds: Array.isArray(result?.addedIds) ? result.addedIds : [],
+      desiredScriptIds: Array.isArray(result?.desiredScriptIds) ? result.desiredScriptIds : [],
+      removedIds: Array.isArray(result?.removedIds) ? result.removedIds : [],
+      skipped: result?.skipped === true,
+      usedFallback: result?.usedFallback === true
+    };
+  }
+
   function enqueueSync(work) {
     // Dynamic content script registration must be serialized so install/startup/storage
     // events do not race and try to register or unregister the same IDs in parallel.
@@ -31,9 +46,14 @@
 
     if (extension.headerStaticCss?.sync) {
       tasks.push(
-        Promise.resolve(extension.headerStaticCss.sync(extensionApi, options)).catch((error) => {
-          reportSyncError("header static CSS", error);
-        })
+        Promise.resolve(extension.headerStaticCss.sync(extensionApi, options))
+          .then((result) => {
+            reportSyncResult("header static CSS", summarizeHeaderStaticCssSync(result));
+            return result;
+          })
+          .catch((error) => {
+            reportSyncError("header static CSS", error);
+          })
       );
     }
 

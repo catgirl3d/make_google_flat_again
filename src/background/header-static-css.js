@@ -1,7 +1,6 @@
 (function attachHeaderStaticCss(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../shared/runtime.js");
   const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../shared/settings.js");
-
   const HEADER_SCRIPT_DEFINITIONS = Object.freeze([
     Object.freeze({
       appId: "gmail",
@@ -87,7 +86,8 @@
 
   function sync(extensionApi, options) {
     const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
-    const desiredScripts = buildContentScriptsFromNormalized(normalizedOptions);
+    const activeDefinitions = getActiveHeaderDefinitionsFromNormalized(normalizedOptions);
+    const desiredScripts = activeDefinitions.map((definition) => buildContentScript(definition));
     const registry = getContentScriptRegistry();
     const payload = {
       managedIds: [...MANAGED_SCRIPT_IDS],
@@ -97,16 +97,20 @@
     if (!registry?.syncManagedCssScripts) {
       return Promise.resolve({
         ...payload,
+        activeAppIds: activeDefinitions.map((definition) => definition.appId),
         options: normalizedOptions,
+        desiredScriptIds: desiredScripts.map((script) => script.id),
         skipped: true
       });
     }
 
     return Promise.resolve(registry.syncManagedCssScripts(payload, extensionApi)).then((result) => {
       return {
+        activeAppIds: activeDefinitions.map((definition) => definition.appId),
         ...result,
         managedIds: [...MANAGED_SCRIPT_IDS],
         desiredScripts,
+        desiredScriptIds: desiredScripts.map((script) => script.id),
         options: normalizedOptions
       };
     });

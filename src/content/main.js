@@ -1,6 +1,7 @@
 (function initializeMakeGoogleFlatAgain() {
   const extension = globalThis.MakeGoogleFlatAgain;
   const debugApi = extension?.debugLogger || require("./debug-logger.js");
+  const logoProbeApi = extension?.logoProbe || require("./logo-probe.js");
   const logger = debugApi.create("main");
   const DOCS_SHARED_ACTIVE_ID = "docs-shared";
   const DOCS_SHARED_MATCH = { hostname: "docs.google.com", pathnamePrefixes: ["/"] };
@@ -80,6 +81,20 @@
     });
   }
 
+  function logLogoProbe() {
+    const probe = logoProbeApi?.collect?.(window, document);
+
+    if (!probe) {
+      return;
+    }
+
+    logger.snapshot("logo-probe", {
+      ...probe,
+      primaryAppId: extension.apps.findPrimaryApp(window.location)?.id || null,
+      readyState: document.readyState
+    });
+  }
+
   const extensionApi = extension.runtime.getExtensionApi();
   const bootstrapPrimaryApp = extension.apps.findPrimaryApp(window.location);
 
@@ -107,12 +122,16 @@
     }
 
     updatePageAttributes(context.options);
+    logLogoProbe();
     logger.event("start-surfaces", {
       surfaces: extension.surfaceRegistry.getSurfaces().map((surface) => surface.name)
     });
     extension.surfaceRegistry.startAll(context);
 
-    const refreshPageAttributes = () => updatePageAttributes(context.options);
+    const refreshPageAttributes = () => {
+      updatePageAttributes(context.options);
+      logLogoProbe();
+    };
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", refreshPageAttributes, { once: true });

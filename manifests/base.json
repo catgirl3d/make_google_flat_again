@@ -39,6 +39,7 @@
         "src/shared/guards.js",
         "src/shared/settings.js",
         "src/content/debug-logger.js",
+        "src/content/logo-probe.js",
         "src/content/surface-registry.js",
         "src/content/surfaces/favicon.js",
         "src/content/surfaces/app-icon-surfaces.js",
@@ -57,6 +58,7 @@
         "src/shared/guards.js",
         "src/shared/settings.js",
         "src/content/debug-logger.js",
+        "src/content/logo-probe.js",
         "src/content/surface-registry.js",
         "src/content/surfaces/app-icon-surfaces.js",
         "src/content/main.js"
