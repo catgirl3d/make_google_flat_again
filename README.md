@@ -2,7 +2,7 @@
 
 A cross-browser extension for restoring older, flatter, and more distinguishable Google Workspace icons instead of the new gradient redesign.
 
-<img src="./img.jpeg" alt="Make Google Flat Again concept" width="150" />
+<img src="./docs/img.jpeg" alt="Make Google Flat Again concept" width="150" />
 
 ## Idea
 
@@ -46,6 +46,12 @@ Source manifests live in `manifests/`:
 
 ## Build And Packaging
 
+Fast path for local validation and packaging:
+
+```powershell
+npm run build
+```
+
 Build a target manifest into a staging directory:
 
 ```powershell
@@ -75,8 +81,21 @@ Staging directories:
 Run tests:
 
 ```powershell
+npm test
+```
+
+The direct Node command still works too:
+
+```powershell
 node --test tests/*.test.js
 ```
+
+## CI And Release Tags
+
+- Regular `push` and `pull_request` runs execute tests only.
+- Packaged release artifacts are built only on version tag pushes.
+- Supported release tag formats: `v0.1.0` or `0.1.0`.
+- The pushed tag must match `manifests/base.json` -> `version`.
 
 Load temporary Firefox build:
 
