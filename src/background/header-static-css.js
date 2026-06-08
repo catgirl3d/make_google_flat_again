@@ -50,16 +50,19 @@
     };
   }
 
-  function buildContentScripts(options) {
-    const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
-
+  function buildContentScriptsFromNormalized(normalizedOptions) {
     if (normalizedOptions.enabled === false) {
       return [];
     }
 
     return HEADER_SCRIPT_DEFINITIONS
-      .filter((definition) => settingsApi.appEnabled(definition.appId, normalizedOptions))
+      .filter((definition) => normalizedOptions.apps[definition.appId] !== false)
       .map((definition) => buildContentScript(definition));
+  }
+
+  function buildContentScripts(options) {
+    const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
+    return buildContentScriptsFromNormalized(normalizedOptions);
   }
 
   function getContentScriptRegistry() {
@@ -68,7 +71,7 @@
 
   function sync(extensionApi, options) {
     const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
-    const desiredScripts = buildContentScripts(normalizedOptions);
+    const desiredScripts = buildContentScriptsFromNormalized(normalizedOptions);
     const registry = getContentScriptRegistry();
     const payload = {
       managedIds: [...MANAGED_SCRIPT_IDS],

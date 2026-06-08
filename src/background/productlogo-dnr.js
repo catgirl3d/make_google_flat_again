@@ -66,16 +66,19 @@
     };
   }
 
-  function buildDynamicRules(options) {
-    const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
-
+  function buildDynamicRulesFromNormalized(normalizedOptions) {
     if (normalizedOptions.enabled === false) {
       return [];
     }
 
     return RULE_DEFINITIONS
-      .filter((definition) => settingsApi.appEnabled(definition.appId, normalizedOptions))
+      .filter((definition) => normalizedOptions.apps[definition.appId] !== false)
       .map((definition) => buildRule(definition));
+  }
+
+  function buildDynamicRules(options) {
+    const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
+    return buildDynamicRulesFromNormalized(normalizedOptions);
   }
 
   function updateDynamicRules(extensionApi, rules) {
@@ -114,7 +117,7 @@
 
   function sync(extensionApi, options) {
     const normalizedOptions = settingsApi.normalizeOptions(options || settingsApi.DEFAULT_OPTIONS);
-    const dynamicRules = buildDynamicRules(normalizedOptions);
+    const dynamicRules = buildDynamicRulesFromNormalized(normalizedOptions);
 
     return updateDynamicRules(extensionApi, dynamicRules).then((payload) => {
       return {
