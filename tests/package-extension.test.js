@@ -2,15 +2,17 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const yauzl = require("yauzl");
 
-const { DIST_DIR, packageExtension } = require("../scripts/package-extension.js");
+const { packageExtension } = require("../scripts/package-extension.js");
 
-const FIREFOX_OUTPUT_PATH = path.join(DIST_DIR, "packaging-firefox-smoke.xpi");
-const CHROME_OUTPUT_PATH = path.join(DIST_DIR, "packaging-chrome-smoke.zip");
-const FIREFOX_STAGE_DIR = path.join(DIST_DIR, "firefox-package");
-const CHROME_STAGE_DIR = path.join(DIST_DIR, "chrome-package");
+const TEST_DIST_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "mgfa-package-extension-"));
+const FIREFOX_OUTPUT_PATH = path.join(TEST_DIST_DIR, "packaging-firefox-smoke.xpi");
+const CHROME_OUTPUT_PATH = path.join(TEST_DIST_DIR, "packaging-chrome-smoke.zip");
+const FIREFOX_STAGE_DIR = path.join(TEST_DIST_DIR, "firefox-package");
+const CHROME_STAGE_DIR = path.join(TEST_DIST_DIR, "chrome-package");
 
 function removePath(targetPath) {
   fs.rmSync(targetPath, { recursive: true, force: true });
@@ -71,11 +73,11 @@ test("packageExtension builds deterministic Firefox and Chrome artifacts", async
 
   try {
     await assert.rejects(
-      packageExtension({ target: "firefox", outputName: "nested/file" }),
+      packageExtension({ target: "firefox", outputName: "nested/file", distDir: TEST_DIST_DIR }),
       /plain filename/
     );
 
-    const firefoxResult = await packageExtension({ target: "firefox", outputName: "packaging-firefox-smoke" });
+    const firefoxResult = await packageExtension({ target: "firefox", outputName: "packaging-firefox-smoke", distDir: TEST_DIST_DIR });
     const firefoxEntries = await readArchiveEntries(firefoxResult.outputPath);
     const firefoxEntryNames = firefoxEntries.map((entry) => entry.fileName);
     const firefoxHash = sha256(firefoxResult.outputPath);
@@ -98,10 +100,10 @@ test("packageExtension builds deterministic Firefox and Chrome artifacts", async
     assert.equal(firefoxEntryNames.includes("src/platform/chrome/content-script-registry.js"), false);
     assert.equal(firefoxEntryNames.includes("src/background/background-chrome.js"), false);
 
-    await packageExtension({ target: "firefox", outputName: "packaging-firefox-smoke" });
+    await packageExtension({ target: "firefox", outputName: "packaging-firefox-smoke", distDir: TEST_DIST_DIR });
     assert.equal(sha256(firefoxResult.outputPath), firefoxHash);
 
-    const chromeResult = await packageExtension({ target: "chrome", outputName: "packaging-chrome-smoke" });
+    const chromeResult = await packageExtension({ target: "chrome", outputName: "packaging-chrome-smoke", distDir: TEST_DIST_DIR });
     const chromeEntries = await readArchiveEntries(chromeResult.outputPath);
     const chromeEntryNames = chromeEntries.map((entry) => entry.fileName);
     const chromeHash = sha256(chromeResult.outputPath);
@@ -122,11 +124,9 @@ test("packageExtension builds deterministic Firefox and Chrome artifacts", async
     assert.equal(chromeEntryNames.some((fileName) => fileName.startsWith("src/")), true);
     assert.equal(chromeEntryNames.includes("src/platform/firefox/content-script-registry.js"), false);
 
-    await packageExtension({ target: "chrome", outputName: "packaging-chrome-smoke" });
+    await packageExtension({ target: "chrome", outputName: "packaging-chrome-smoke", distDir: TEST_DIST_DIR });
     assert.equal(sha256(chromeResult.outputPath), chromeHash);
   } finally {
-    for (const targetPath of [FIREFOX_OUTPUT_PATH, CHROME_OUTPUT_PATH, FIREFOX_STAGE_DIR, CHROME_STAGE_DIR]) {
-      removePath(targetPath);
-    }
+    removePath(TEST_DIST_DIR);
   }
 });

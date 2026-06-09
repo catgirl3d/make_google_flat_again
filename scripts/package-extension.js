@@ -25,6 +25,10 @@ function compareStrings(left, right) {
   return 0;
 }
 
+function resolveDistDir(distDir) {
+  return distDir == null ? DIST_DIR : distDir;
+}
+
 function assertTarget(target) {
   if (!SUPPORTED_TARGETS.has(target)) {
     throw new Error(`Unsupported package target: ${target}`);
@@ -130,10 +134,11 @@ function parseArgs(argv) {
   };
 }
 
-function prepareStage(target) {
-  const stageDir = path.join(DIST_DIR, `${target}-package`);
+function prepareStage(target, distDir) {
+  const resolvedDistDir = resolveDistDir(distDir);
+  const stageDir = path.join(resolvedDistDir, `${target}-package`);
 
-  fs.mkdirSync(DIST_DIR, { recursive: true });
+  fs.mkdirSync(resolvedDistDir, { recursive: true });
   fs.rmSync(stageDir, { recursive: true, force: true });
   fs.mkdirSync(stageDir, { recursive: true });
 
@@ -255,12 +260,12 @@ function writeDeterministicZip({ stageDir, outputPath }) {
   });
 }
 
-function stageExtension({ target, mode = "dev" } = {}) {
+function stageExtension({ target, mode = "dev", distDir } = {}) {
   assertTarget(target);
   assertMode(mode);
   assertPackagingInputs();
 
-  const stageDir = prepareStage(target);
+  const stageDir = prepareStage(target, distDir);
 
   copyExtensionSources(stageDir);
 
@@ -275,12 +280,13 @@ function stageExtension({ target, mode = "dev" } = {}) {
   };
 }
 
-async function packageExtension({ target, outputName } = {}) {
+async function packageExtension({ target, outputName, distDir } = {}) {
   const safeOutputName = outputName == null ? undefined : assertSafeOutputName(outputName);
-  const { manifest, stageDir } = stageExtension({ target, mode: "prod" });
+  const resolvedDistDir = resolveDistDir(distDir);
+  const { manifest, stageDir } = stageExtension({ target, mode: "prod", distDir: resolvedDistDir });
 
   const resolvedOutputName = normalizeOutputName(target, safeOutputName, manifest.version);
-  const outputPath = path.join(DIST_DIR, resolvedOutputName);
+  const outputPath = path.join(resolvedDistDir, resolvedOutputName);
 
   fs.rmSync(outputPath, { force: true });
 
