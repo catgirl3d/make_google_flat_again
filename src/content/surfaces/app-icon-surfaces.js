@@ -11,6 +11,7 @@
   const ATTR_NAME = "data-mgfa-app-icon-surfaces";
   // These selectors share one style element and refresh cycle, so they stay in one runtime surface.
   const APP_ICON_SURFACE_NAMES = ["sidePanel", "appLauncher", "docsHomescreenMenu"];
+  let refreshSurface = () => {};
 
   function escapeCssUrl(url) {
     return String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -189,6 +190,8 @@ ${beforeSelectors} {
       midnightTimer = scheduleNextMidnight(apply);
     }
 
+    refreshSurface = () => apply();
+
     logger.event("surface-started", { readyState: document.readyState });
     apply();
 
@@ -204,9 +207,14 @@ ${beforeSelectors} {
     }, { passive: true });
   }
 
+  function refresh() {
+    refreshSurface();
+  }
+
   const api = {
     name: "app-icon-surfaces",
     start,
+    refresh,
     escapeCssUrl,
     buildSidePanelCss,
     buildAppLauncherCss,

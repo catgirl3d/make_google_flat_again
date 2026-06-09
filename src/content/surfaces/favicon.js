@@ -8,6 +8,7 @@
   const logger = debugApi.create("favicon");
 
   const MANAGED_ICON_SELECTOR = 'link[data-mgfa-favicon="1"]';
+  let refreshSurface = () => {};
 
   function relIsIcon(rel) {
     return /\bicon\b/i.test(String(rel || "")) || /apple-touch-icon|mask-icon/i.test(String(rel || ""));
@@ -254,6 +255,8 @@
       }, delay);
     }
 
+    refreshSurface = () => schedule(60);
+
     function startObserver() {
       if (observer || !document.head) {
         return;
@@ -305,9 +308,14 @@
     }, { passive: true });
   }
 
+  function refresh() {
+    refreshSurface();
+  }
+
   const api = {
     name: "favicon",
     start,
+    refresh,
     relIsIcon,
     getAppMimeType,
     shouldKeepObserverActive

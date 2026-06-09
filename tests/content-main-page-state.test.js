@@ -143,6 +143,7 @@ function createPageEnvironment({ location, readyState = "complete" }) {
   const documentElement = createDocumentElement();
   const extensionApi = { runtime: { lastError: null } };
   const startedContexts = [];
+  const refreshedContexts = [];
   let observedOptionsListener = null;
 
   globalThis.Event = class Event {
@@ -220,6 +221,9 @@ function createPageEnvironment({ location, readyState = "complete" }) {
       },
       startAll(context) {
         startedContexts.push(context);
+      },
+      refreshAll(context, meta) {
+        refreshedContexts.push({ context, meta });
       }
     }
   };
@@ -237,6 +241,7 @@ function createPageEnvironment({ location, readyState = "complete" }) {
       await flushAsyncWork();
     },
     startedContexts,
+    refreshedContexts,
     async updateOptions(options) {
       observedOptionsListener(options);
       await flushAsyncWork();
@@ -312,11 +317,17 @@ test("real main observeOptions callback refreshes attributes without targets dep
   await page.updateOptions({ enabled: true, apps: { docs: false } });
   assert.equal(page.documentElement.getAttribute("data-mgfa-active"), "docs-shared");
   assert.equal(page.documentElement.getAttribute("data-mgfa-app"), null);
+  assert.equal(page.refreshedContexts.length, 1);
+  assert.equal(page.refreshedContexts[0].context.options.apps.docs, false);
+  assert.equal(page.refreshedContexts[0].meta.reason, "options-changed");
 
   await page.updateOptions({ enabled: false, apps: { docs: true } });
   assert.equal(page.documentElement.getAttribute("data-mgfa-disabled"), "1");
   assert.equal(page.documentElement.getAttribute("data-mgfa-active"), null);
   assert.equal(page.documentElement.getAttribute("data-mgfa-app"), null);
+  assert.equal(page.refreshedContexts.length, 2);
+  assert.equal(page.refreshedContexts[1].context.options.enabled, false);
+  assert.equal(page.refreshedContexts[1].meta.reason, "options-changed");
 });
 
 test("real main pause state does not replace active/app state", async () => {

@@ -1,17 +1,18 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const {
-  APP_KEYS,
-  DEFAULT_OPTIONS,
-  normalizeOptions,
-  getOptions,
-  setOptions,
-  appEnabled,
-  countEnabledApps,
-  getChangedOptions,
-  observeOptions
-} = require("../src/shared/settings.js");
+const SETTINGS_MODULE_PATH = "../src/shared/settings.js";
+
+function loadSettings() {
+  delete require.cache[require.resolve(SETTINGS_MODULE_PATH)];
+  return require(SETTINGS_MODULE_PATH);
+}
+
+let settings = null;
+
+test.beforeEach(() => {
+  settings = loadSettings();
+});
 
 function captureConsoleWarn() {
   const originalWarn = console.warn;
@@ -30,12 +31,12 @@ function captureConsoleWarn() {
 }
 
 test("default options enable every registered app", () => {
-  assert.equal(APP_KEYS.length > 0, true);
-  assert.equal(countEnabledApps(DEFAULT_OPTIONS), APP_KEYS.length);
+  assert.equal(settings.APP_KEYS.length > 0, true);
+  assert.equal(settings.countEnabledApps(settings.DEFAULT_OPTIONS), settings.APP_KEYS.length);
 });
 
 test("normalizeOptions keeps missing apps enabled by default", () => {
-  const normalized = normalizeOptions({
+  const normalized = settings.normalizeOptions({
     enabled: true,
     apps: {
       gmail: false,
@@ -49,7 +50,7 @@ test("normalizeOptions keeps missing apps enabled by default", () => {
 });
 
 test("appEnabled respects global toggle", () => {
-  assert.equal(appEnabled("gmail", { enabled: false, apps: { gmail: true } }), false);
+  assert.equal(settings.appEnabled("gmail", { enabled: false, apps: { gmail: true } }), false);
 });
 
 test("getOptions supports promise-based storage APIs", async () => {
@@ -70,9 +71,52 @@ test("getOptions supports promise-based storage APIs", async () => {
     }
   };
 
-  const options = await getOptions(fakeApi);
+  const options = await settings.getOptions(fakeApi);
   assert.equal(options.apps.gmail, false);
   assert.equal(options.apps.drive, true);
+});
+
+test("getOptions falls back from sync to local when sync read fails", async () => {
+  const rejection = new Error("sync unavailable");
+  const warnSpy = captureConsoleWarn();
+  const localOptions = {
+    enabled: true,
+    apps: {
+      docs: false,
+      gmail: true
+    }
+  };
+  const fakeApi = {
+    storage: {
+      sync: {
+        get() {
+          return Promise.reject(rejection);
+        }
+      },
+      local: {
+        get(defaults) {
+          const key = Object.keys(defaults)[0];
+          return Promise.resolve({
+            [key]: localOptions
+          });
+        },
+        set() {
+          return Promise.resolve();
+        }
+      }
+    }
+  };
+
+  try {
+    const options = await settings.getOptions(fakeApi);
+
+    assert.deepEqual(options, settings.normalizeOptions(localOptions));
+    assert.equal(warnSpy.calls.length, 1);
+    assert.equal(warnSpy.calls[0][0], "[mgfa/settings] Failed to load options in sync storage. Falling back to local.");
+    assert.equal(warnSpy.calls[0][1], rejection);
+  } finally {
+    warnSpy.restore();
+  }
 });
 
 test("getOptions logs and falls back to defaults when promise-based storage rejects", async () => {
@@ -89,9 +133,9 @@ test("getOptions logs and falls back to defaults when promise-based storage reje
   const warnSpy = captureConsoleWarn();
 
   try {
-    const options = await getOptions(fakeApi);
+    const options = await settings.getOptions(fakeApi);
 
-    assert.deepEqual(options, normalizeOptions(DEFAULT_OPTIONS));
+    assert.deepEqual(options, settings.normalizeOptions(settings.DEFAULT_OPTIONS));
     assert.equal(warnSpy.calls.length, 1);
     assert.equal(warnSpy.calls[0][0], "[mgfa/settings] Failed to load options from sync storage. Using defaults.");
     assert.equal(warnSpy.calls[0][1], rejection);
@@ -119,9 +163,9 @@ test("getOptions logs and falls back to defaults when callback storage exposes r
   const warnSpy = captureConsoleWarn();
 
   try {
-    const options = await getOptions(fakeApi);
+    const options = await settings.getOptions(fakeApi);
 
-    assert.deepEqual(options, normalizeOptions(DEFAULT_OPTIONS));
+    assert.deepEqual(options, settings.normalizeOptions(settings.DEFAULT_OPTIONS));
     assert.equal(warnSpy.calls.length, 1);
     assert.equal(warnSpy.calls[0][0], "[mgfa/settings] Failed to load options from sync storage. Using defaults.");
     assert.equal(warnSpy.calls[0][1], lastError);
@@ -143,10 +187,60 @@ test("setOptions supports promise-based storage APIs", async () => {
     }
   };
 
-  await setOptions({ enabled: true, apps: { gmail: false } }, fakeApi);
+  await settings.setOptions({ enabled: true, apps: { gmail: false } }, fakeApi);
 
   assert.equal(writtenValue.mgfaOptions.apps.gmail, false);
   assert.equal(writtenValue.mgfaOptions.apps.docs, true);
+});
+
+test("setOptions falls back to local when sync write fails", async () => {
+  const rejection = new Error("sync quota exceeded");
+  const warnSpy = captureConsoleWarn();
+  let localPayload = null;
+  const fakeApi = {
+    storage: {
+      sync: {
+        set() {
+          return Promise.reject(rejection);
+        }
+      },
+      local: {
+        get(defaults) {
+          return Promise.resolve({ [Object.keys(defaults)[0]]: null });
+        },
+        set(value) {
+          localPayload = value;
+          return Promise.resolve();
+        }
+      }
+    }
+  };
+
+  try {
+    const saved = await settings.setOptions({ enabled: true, apps: { gmail: false } }, fakeApi);
+
+    assert.equal(saved.apps.gmail, false);
+    assert.equal(localPayload[settings.STORAGE_KEY].apps.gmail, false);
+    assert.equal(warnSpy.calls.length, 1);
+    assert.equal(warnSpy.calls[0][0], "[mgfa/settings] Failed to save options in sync storage. Falling back to local.");
+    assert.equal(warnSpy.calls[0][1], rejection);
+  } finally {
+    warnSpy.restore();
+  }
+});
+
+test("setOptions rejects synchronous storage throws when no fallback exists", async () => {
+  const fakeApi = {
+    storage: {
+      sync: {
+        set() {
+          throw new Error("sync exploded");
+        }
+      }
+    }
+  };
+
+  await assert.rejects(settings.setOptions({ enabled: true }, fakeApi), /sync exploded/);
 });
 
 test("setOptions rejects callback-based storage failures via runtime.lastError", async () => {
@@ -165,11 +259,11 @@ test("setOptions rejects callback-based storage failures via runtime.lastError",
     }
   };
 
-  await assert.rejects(setOptions({ enabled: true }, fakeApi), /quota exceeded/);
+  await assert.rejects(settings.setOptions({ enabled: true }, fakeApi), /quota exceeded/);
 });
 
 test("getChangedOptions normalizes partial storage updates", () => {
-  const options = getChangedOptions({
+  const options = settings.getChangedOptions({
     newValue: {
       enabled: true,
       apps: {
@@ -183,13 +277,11 @@ test("getChangedOptions normalizes partial storage updates", () => {
   assert.equal(options.apps.gmail, true);
 });
 
-test("observeOptions listens for mgfaOptions changes on the active storage area", () => {
+test("observeOptions accepts changes from storage", () => {
   let handler = null;
   const observed = [];
   const fakeApi = {
     storage: {
-      sync: {},
-      local: {},
       onChanged: {
         addListener(listener) {
           handler = listener;
@@ -203,17 +295,16 @@ test("observeOptions listens for mgfaOptions changes on the active storage area"
     }
   };
 
-  const stopObserving = observeOptions((options, meta) => {
+  const stopObserving = settings.observeOptions((options, meta) => {
     observed.push({ options, meta });
   }, fakeApi);
 
-  handler({ mgfaOptions: { newValue: { enabled: false, apps: { docs: false } } } }, "sync");
-  handler({ mgfaOptions: { newValue: { enabled: true, apps: { docs: true } } } }, "local");
+  handler({ [settings.STORAGE_KEY]: { newValue: { enabled: true, apps: { docs: true } } } }, "sync");
   stopObserving();
 
   assert.equal(observed.length, 1);
-  assert.equal(observed[0].options.enabled, false);
-  assert.equal(observed[0].options.apps.docs, false);
+  assert.equal(observed[0].options.enabled, true);
+  assert.equal(observed[0].options.apps.docs, true);
   assert.equal(observed[0].meta.areaName, "sync");
   assert.equal(handler, null);
 });

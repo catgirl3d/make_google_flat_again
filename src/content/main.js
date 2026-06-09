@@ -144,13 +144,13 @@
     extension.settings.observeOptions((nextOptions) => {
       context.options = nextOptions;
       refreshPageAttributes();
+      extension.surfaceRegistry.refreshAll?.(context, { reason: "options-changed" });
       logger.snapshot("options-changed", {
         enabled: nextOptions.enabled !== false,
         enabledApps: extension.apps.apps
           .filter((app) => extension.settings.appEnabled(app.id, nextOptions))
           .map((app) => app.id)
       });
-      window.dispatchEvent(new Event("focus"));
     }, extensionApi);
   });
 })();

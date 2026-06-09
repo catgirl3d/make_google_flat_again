@@ -26,92 +26,133 @@
 
   function getStorageAreaName(extensionApi) {
     const api = extensionApi || runtime.getExtensionApi();
-
-    if (api?.storage?.sync && getStorageArea(api) === api.storage.sync) {
+    if (api?.storage?.sync) {
       return "sync";
     }
-
-    if (api?.storage?.local && getStorageArea(api) === api.storage.local) {
+    if (api?.storage?.local) {
       return "local";
     }
-
     return null;
   }
 
-  function warnAndGetDefaultOptions(error, extensionApi) {
-    const areaName = getStorageAreaName(extensionApi) || "unknown";
+  function toStorageError(error, fallbackMessage) {
+    if (error instanceof Error) {
+      return error;
+    }
+    return new Error(error?.message || fallbackMessage);
+  }
+
+  function warnStorageDefault(areaName, error) {
     globalScope.console?.warn(
       `[mgfa/settings] Failed to load options from ${areaName} storage. Using defaults.`,
       error
     );
-    return normalizeOptions(DEFAULT_OPTIONS);
   }
 
-  function getOptions(extensionApi) {
-    const storageArea = getStorageArea(extensionApi);
-
-    if (!storageArea) {
-      return Promise.resolve(normalizeOptions(DEFAULT_OPTIONS));
-    }
-
-    const query = { [STORAGE_KEY]: DEFAULT_OPTIONS };
-
+  function fetchFromArea(area, query, extensionApi) {
     try {
-      if (storageArea.get.length < 2) {
-        return Promise.resolve(storageArea.get(query))
-          .then((result) => normalizeOptions(result?.[STORAGE_KEY]))
-          .catch((error) => warnAndGetDefaultOptions(error, extensionApi));
+      if (area.get.length < 2) {
+        return Promise.resolve(area.get(query));
       }
-
-      return new Promise((resolve) => {
-        storageArea.get(query, (result) => {
+      return new Promise((resolve, reject) => {
+        area.get(query, (result) => {
           const api = extensionApi || runtime.getExtensionApi();
-          const lastError = api?.runtime?.lastError;
-
-          if (lastError) {
-            resolve(warnAndGetDefaultOptions(lastError, api));
-            return;
+          if (api?.runtime?.lastError) {
+            reject(api.runtime.lastError);
+          } else {
+            resolve(result);
           }
-
-          resolve(normalizeOptions(result?.[STORAGE_KEY]));
         });
       });
     } catch (error) {
-      return Promise.resolve(warnAndGetDefaultOptions(error, extensionApi));
+      return Promise.reject(error);
     }
   }
 
-  function setOptions(options, extensionApi) {
-    const storageArea = getStorageArea(extensionApi);
-    const normalizedOptions = normalizeOptions(options);
-
-    if (!storageArea) {
-      return Promise.resolve(normalizedOptions);
-    }
-
-    const payload = { [STORAGE_KEY]: normalizedOptions };
-
+  function saveToArea(area, payload, extensionApi) {
     try {
-      if (storageArea.set.length < 2) {
-        return Promise.resolve(storageArea.set(payload))
-          .then(() => normalizedOptions);
+      if (area.set.length < 2) {
+        return Promise.resolve(area.set(payload));
       }
-
       return new Promise((resolve, reject) => {
-        storageArea.set(payload, () => {
+        area.set(payload, () => {
           const api = extensionApi || runtime.getExtensionApi();
-
           if (api?.runtime?.lastError) {
-            reject(new Error(api.runtime.lastError.message || "Failed to persist options."));
-            return;
+            reject(api.runtime.lastError);
+          } else {
+            resolve();
           }
-
-          resolve(normalizedOptions);
         });
       });
-    } catch (_) {
-      return Promise.resolve(normalizedOptions);
+    } catch (error) {
+      return Promise.reject(error);
     }
+  }
+
+  async function getOptions(extensionApi) {
+    const api = extensionApi || runtime.getExtensionApi();
+    const query = { [STORAGE_KEY]: DEFAULT_OPTIONS };
+
+    if (api?.storage?.sync) {
+      try {
+        const result = await fetchFromArea(api.storage.sync, query, api);
+        return normalizeOptions(result?.[STORAGE_KEY]);
+      } catch (error) {
+        if (api?.storage?.local) {
+          globalScope.console?.warn(
+            "[mgfa/settings] Failed to load options in sync storage. Falling back to local.",
+            error
+          );
+        } else {
+          warnStorageDefault("sync", error);
+          return normalizeOptions(DEFAULT_OPTIONS);
+        }
+      }
+    }
+
+    if (api?.storage?.local) {
+      try {
+        const result = await fetchFromArea(api.storage.local, query, api);
+        return normalizeOptions(result?.[STORAGE_KEY]);
+      } catch (error) {
+        warnStorageDefault("local", error);
+      }
+    }
+
+    return normalizeOptions(DEFAULT_OPTIONS);
+  }
+
+  async function setOptions(options, extensionApi) {
+    const api = extensionApi || runtime.getExtensionApi();
+    const normalizedOptions = normalizeOptions(options);
+    const payload = { [STORAGE_KEY]: normalizedOptions };
+
+    if (api?.storage?.sync) {
+      try {
+        await saveToArea(api.storage.sync, payload, api);
+        return normalizedOptions;
+      } catch (error) {
+        if (api?.storage?.local) {
+          globalScope.console?.warn(
+            "[mgfa/settings] Failed to save options in sync storage. Falling back to local.",
+            error
+          );
+        } else {
+          throw toStorageError(error, "Failed to persist options.");
+        }
+      }
+    }
+
+    if (api?.storage?.local) {
+      try {
+        await saveToArea(api.storage.local, payload, api);
+        return normalizedOptions;
+      } catch (error) {
+        throw toStorageError(error, "Failed to persist options.");
+      }
+    }
+
+    return normalizedOptions;
   }
 
   function appEnabled(appId, options) {
@@ -135,13 +176,8 @@
       return () => {};
     }
 
-    const expectedAreaName = getStorageAreaName(api);
     const handler = (changes, areaName) => {
       if (!changes || !Object.prototype.hasOwnProperty.call(changes, STORAGE_KEY)) {
-        return;
-      }
-
-      if (expectedAreaName && areaName && areaName !== expectedAreaName) {
         return;
       }
 
