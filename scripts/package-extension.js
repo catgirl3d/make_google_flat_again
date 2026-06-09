@@ -69,8 +69,8 @@ function normalizeOutputName(target, outputName, manifestVersion) {
 
   if (!resolvedOutputName) {
     resolvedOutputName = target === "firefox"
-      ? `make-google-flat-again-${manifestVersion}-firefox.xpi`
-      : `make-google-flat-again-${manifestVersion}-chrome.zip`;
+      ? `classic-google-workspace-icons-${manifestVersion}-firefox.xpi`
+      : `classic-google-workspace-icons-${manifestVersion}-chrome.zip`;
   }
 
   if (target === "firefox" && !resolvedOutputName.toLowerCase().endsWith(".xpi")) {

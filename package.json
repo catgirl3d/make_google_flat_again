@@ -1,7 +1,7 @@
 {
-  "name": "make-google-flat-again",
+  "name": "classic-google-workspace-icons",
   "private": true,
-  "description": "Build and packaging commands for the Make Google Flat Again extension.",
+  "description": "Build and packaging commands for the Classic Google Workspace Icons extension.",
   "engines": {
     "node": ">=20"
   },
