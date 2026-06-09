@@ -87,6 +87,11 @@ test("built Firefox manifest keeps Firefox-only background wiring and dynamic he
   assert.equal(manifest.host_permissions.includes("https://docs.google.com/*"), true);
   assert.equal(manifest.host_permissions.includes("https://meet.google.com/*"), true);
   assert.equal(manifest.browser_specific_settings.gecko.id, "make-google-flat-again@catgirl3d.github.io");
+  assert.equal(manifest.browser_specific_settings.gecko.strict_min_version, "140.0");
+  assert.deepEqual(manifest.browser_specific_settings.gecko.data_collection_permissions, {
+    required: ["none"]
+  });
+  assert.equal(manifest.browser_specific_settings.gecko_android.strict_min_version, "142.0");
   assert.deepEqual(
     manifest.content_scripts.filter((entry) => Array.isArray(entry.css) && entry.css.some((file) => file.includes("header-"))),
     []
