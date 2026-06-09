@@ -10,24 +10,22 @@
   <main class="popup-shell">
     <header class="popup-header">
       <div class="brand">
-        <img src="../../assets/extension/icon-48.png" alt="" class="hero-icon">
+        <div class="logo-wrapper">
+          <img src="../../assets/extension/icon-48.png" alt="" class="hero-icon">
+          <span id="extension-status-glow" class="status-glow"></span>
+        </div>
         <div>
-          <p class="eyebrow">Extension</p>
-          <h1>Make Google Flat Again</h1>
+          <p class="eyebrow">Extension Status: <span id="extension-status-text">Active</span></p>
+          <h1>Make Google Flat</h1>
         </div>
       </div>
-      <p class="summary">Restores classic Google Workspace icons.</p>
     </header>
 
-    <section class="card">
-      <div class="card-heading">
-        <h2>Controls</h2>
-        <span id="extension-status" class="pill"></span>
-      </div>
-      <div class="toggle-row toggle-row-master">
+    <section class="card master-control-card">
+      <div class="toggle-row">
         <div>
-          <span class="item-name">Enable extension</span>
-          <span class="item-meta">Applies classic icon and header replacements.</span>
+          <span class="item-name">Master Switch</span>
+          <span class="item-meta">Enable flat icon sets and NetRequest redirects</span>
         </div>
         <label class="switch" for="extension-enabled">
           <input id="extension-enabled" class="toggle-input" type="checkbox">
@@ -42,16 +40,19 @@
         <h2>Supported Apps</h2>
         <span id="app-count" class="pill"></span>
       </div>
-      <ul id="app-list" class="item-list"></ul>
+      <ul id="app-list" class="app-grid"></ul>
     </section>
 
-    <section class="card">
-      <div class="card-heading">
+    <details class="card guard-rails-accordion">
+      <summary class="accordion-head">
         <h2>Guard Rails</h2>
         <span id="guard-count" class="pill pill-muted"></span>
+      </summary>
+      <div class="accordion-body">
+        <p class="guard-intro">To prevent breaking critical workspace processes, alterations are paused on the following screens:</p>
+        <ul id="guard-list" class="guard-list"></ul>
       </div>
-      <ul id="guard-list" class="guard-list"></ul>
-    </section>
+    </details>
 
   </main>
 
