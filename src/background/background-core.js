@@ -9,6 +9,8 @@
     return;
   }
 
+  const buildFlags = extension.buildFlags || require("../shared/build-flags.js");
+
   globalScope.__MGFA_BACKGROUND_SYNC_INITIALIZED__ = true;
 
   const extensionApi = extension.runtime.getExtensionApi();
@@ -19,6 +21,10 @@
   }
 
   function reportSyncResult(label, payload) {
+    if (!buildFlags.isDevelopment) {
+      return;
+    }
+
     console.log(`[mgfa/background] ${label} sync`, payload);
   }
 

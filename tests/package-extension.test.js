@@ -85,6 +85,10 @@ test("packageExtension builds deterministic Firefox and Chrome artifacts", async
     assert.equal(fs.existsSync(path.join(FIREFOX_STAGE_DIR, "src", "platform", "chrome")), false);
     assert.equal(fs.existsSync(path.join(FIREFOX_STAGE_DIR, "src", "background", "background-chrome.js")), false);
     assert.equal(fs.existsSync(path.join(FIREFOX_STAGE_DIR, "src", "platform", "firefox", "content-script-registry.js")), true);
+    assert.equal(
+      fs.readFileSync(path.join(FIREFOX_STAGE_DIR, "src", "shared", "build-flags.js"), "utf8").includes("const DEFAULT_IS_DEVELOPMENT = false;"),
+      true
+    );
     assert.deepEqual(firefoxEntryNames, [...firefoxEntryNames].sort());
     assert.equal(firefoxEntries.every((entry) => entry.compressionMethod === 0), true);
     assert.equal(firefoxEntryNames.some((fileName) => fileName.endsWith("/")), false);
@@ -106,6 +110,10 @@ test("packageExtension builds deterministic Firefox and Chrome artifacts", async
     assert.equal(fs.existsSync(path.join(CHROME_STAGE_DIR, "manifest.json")), true);
     assert.equal(fs.existsSync(path.join(CHROME_STAGE_DIR, "src", "platform", "firefox")), false);
     assert.equal(fs.existsSync(path.join(CHROME_STAGE_DIR, "src", "platform", "chrome", "content-script-registry.js")), true);
+    assert.equal(
+      fs.readFileSync(path.join(CHROME_STAGE_DIR, "src", "shared", "build-flags.js"), "utf8").includes("const DEFAULT_IS_DEVELOPMENT = false;"),
+      true
+    );
     assert.deepEqual(chromeEntryNames, [...chromeEntryNames].sort());
     assert.equal(chromeEntries.every((entry) => entry.compressionMethod === 0), true);
     assert.equal(chromeEntryNames.some((fileName) => fileName.endsWith("/")), false);

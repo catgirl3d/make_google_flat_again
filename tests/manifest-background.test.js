@@ -8,6 +8,7 @@ const PROJECT_ROOT = path.join(__dirname, "..");
 
 const EXPECTED_FIREFOX_BACKGROUND_SCRIPTS = [
   "src/shared/runtime.js",
+  "src/shared/build-flags.js",
   "src/shared/app-registry.js",
   "src/shared/apps.js",
   "src/shared/settings.js",
@@ -19,6 +20,7 @@ const EXPECTED_FIREFOX_BACKGROUND_SCRIPTS = [
 
 const EXPECTED_CHROME_IMPORT_SCRIPTS = [
   "../shared/runtime.js",
+  "../shared/build-flags.js",
   "../shared/app-registry.js",
   "../shared/apps.js",
   "../shared/settings.js",
@@ -30,6 +32,7 @@ const EXPECTED_CHROME_IMPORT_SCRIPTS = [
 
 const EXPECTED_PRIMARY_CONTENT_SCRIPT_JS = [
   "src/shared/runtime.js",
+  "src/shared/build-flags.js",
   "src/shared/app-registry.js",
   "src/shared/apps.js",
   "src/shared/settings.js",
@@ -43,6 +46,7 @@ const EXPECTED_PRIMARY_CONTENT_SCRIPT_JS = [
 
 const EXPECTED_OGS_IFRAME_CONTENT_SCRIPT_JS = [
   "src/shared/runtime.js",
+  "src/shared/build-flags.js",
   "src/shared/app-registry.js",
   "src/shared/apps.js",
   "src/shared/settings.js",

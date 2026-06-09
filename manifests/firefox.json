@@ -29,6 +29,7 @@
   "background": {
     "scripts": [
       "src/shared/runtime.js",
+      "src/shared/build-flags.js",
       "src/shared/app-registry.js",
       "src/shared/apps.js",
       "src/shared/settings.js",

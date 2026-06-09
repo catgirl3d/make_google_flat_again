@@ -1,8 +1,8 @@
-# Make Google Flat Again
+# Classic Google Workspace Icons
 
 A cross-browser extension for restoring older, flatter, and more distinguishable Google Workspace icons instead of the new gradient redesign.
 
-<img src="./docs/img.jpeg" alt="Make Google Flat Again concept" width="150" />
+<img src="./docs/img.jpeg" alt="Classic Google Workspace Icons concept" width="150" />
 
 ## Idea
 

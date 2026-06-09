@@ -1,8 +1,20 @@
 (function attachDebugLogger(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../shared/runtime.js");
+  const buildFlags = globalScope.MakeGoogleFlatAgain?.buildFlags || require("../shared/build-flags.js");
 
   const STORE_KEY = "__MGFA_DEBUG__";
   const HISTORY_LIMIT = 120;
+  const NOOP_LOGGER = Object.freeze({
+    event() {
+      return false;
+    },
+    snapshot() {
+      return false;
+    },
+    read() {
+      return null;
+    }
+  });
 
   function stableClone(value) {
     if (Array.isArray(value)) {
@@ -69,6 +81,10 @@
   }
 
   function create(scope) {
+    if (!buildFlags.isDevelopment) {
+      return NOOP_LOGGER;
+    }
+
     return {
       event(label, payload) {
         const snapshot = typeof payload === "undefined" ? undefined : stableClone(payload);

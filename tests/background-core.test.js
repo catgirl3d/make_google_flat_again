@@ -46,6 +46,7 @@ test("background core serializes repeated sync triggers", async () => {
   };
 
   globalThis.MakeGoogleFlatAgain = {
+    buildFlags: { isDevelopment: true },
     runtime: {
       getExtensionApi() {
         return extensionApi;
@@ -121,6 +122,7 @@ test("background core logs successful header static CSS sync summaries", async (
   };
 
   globalThis.MakeGoogleFlatAgain = {
+    buildFlags: { isDevelopment: true },
     runtime: {
       getExtensionApi() {
         return extensionApi;
@@ -172,6 +174,108 @@ test("background core logs successful header static CSS sync summaries", async (
     ]);
   } finally {
     console.log = originalConsoleLog;
+    clearBackgroundGlobals();
+  }
+});
+
+test("background core suppresses success logs in production mode", async () => {
+  clearBackgroundGlobals();
+  delete require.cache[require.resolve("../src/background/background-core.js")];
+
+  const capturedLogs = [];
+  const originalConsoleLog = console.log;
+  const extensionApi = {
+    runtime: {
+      onInstalled: { addListener() {} },
+      onStartup: { addListener() {} }
+    }
+  };
+
+  console.log = (...args) => {
+    capturedLogs.push(args);
+  };
+
+  globalThis.MakeGoogleFlatAgain = {
+    buildFlags: { isDevelopment: false },
+    runtime: {
+      getExtensionApi() {
+        return extensionApi;
+      }
+    },
+    settings: {
+      getOptions() {
+        return Promise.resolve({ enabled: true, apps: {} });
+      },
+      observeOptions() {
+        return () => {};
+      }
+    },
+    headerStaticCss: {
+      sync() {
+        return Promise.resolve({ skipped: false, usedFallback: false });
+      }
+    }
+  };
+
+  try {
+    require("../src/background/background-core.js");
+    await flushAsyncWork();
+
+    assert.deepEqual(capturedLogs, []);
+  } finally {
+    console.log = originalConsoleLog;
+    clearBackgroundGlobals();
+  }
+});
+
+test("background core keeps warning logs in production mode", async () => {
+  clearBackgroundGlobals();
+  delete require.cache[require.resolve("../src/background/background-core.js")];
+
+  const capturedWarnings = [];
+  const originalConsoleWarn = console.warn;
+  const extensionApi = {
+    runtime: {
+      onInstalled: { addListener() {} },
+      onStartup: { addListener() {} }
+    }
+  };
+
+  console.warn = (...args) => {
+    capturedWarnings.push(args);
+  };
+
+  globalThis.MakeGoogleFlatAgain = {
+    buildFlags: { isDevelopment: false },
+    runtime: {
+      getExtensionApi() {
+        return extensionApi;
+      }
+    },
+    settings: {
+      getOptions() {
+        return Promise.resolve({ enabled: true, apps: {} });
+      },
+      observeOptions() {
+        return () => {};
+      }
+    },
+    headerStaticCss: {
+      sync() {
+        return Promise.reject(new Error("broken sync"));
+      }
+    }
+  };
+
+  try {
+    require("../src/background/background-core.js");
+    await flushAsyncWork();
+
+    assert.equal(capturedWarnings.length, 1);
+    assert.equal(capturedWarnings[0][0], "[mgfa/background] header static CSS sync failed");
+    assert.match(String(capturedWarnings[0][1]?.message || capturedWarnings[0][1]), /broken sync/);
+  } finally {
+    console.warn = originalConsoleWarn;
     clearBackgroundGlobals();
   }
 });

@@ -1,5 +1,6 @@
 (function attachLogoProbe(globalScope) {
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../shared/runtime.js");
+  const buildFlags = globalScope.MakeGoogleFlatAgain?.buildFlags || require("../shared/build-flags.js");
 
   const PROBE_DEFINITIONS = Object.freeze([
     Object.freeze({
@@ -68,6 +69,10 @@
   }
 
   function collect(viewLike, documentLike) {
+    if (!buildFlags.isDevelopment) {
+      return null;
+    }
+
     if (typeof documentLike?.querySelectorAll !== "function") {
       return null;
     }

@@ -10,6 +10,8 @@ const SRC_PATH = path.join(PROJECT_ROOT, "src");
 const MANIFESTS_PATH = path.join(PROJECT_ROOT, "manifests");
 const FIXED_ZIP_DATE = new Date(1980, 0, 1, 0, 0, 0);
 const STABLE_FILE_MODE = 0o100644;
+const BUILD_MODES = new Set(["dev", "prod"]);
+const BUILD_FLAGS_PATH = path.join("src", "shared", "build-flags.js");
 
 function compareStrings(left, right) {
   if (left < right) {
@@ -26,6 +28,12 @@ function compareStrings(left, right) {
 function assertTarget(target) {
   if (!SUPPORTED_TARGETS.has(target)) {
     throw new Error(`Unsupported package target: ${target}`);
+  }
+}
+
+function assertMode(mode) {
+  if (!BUILD_MODES.has(mode)) {
+    throw new Error(`Unsupported build mode: ${mode}`);
   }
 }
 
@@ -137,6 +145,23 @@ function copyExtensionSources(stageDir) {
   fs.cpSync(SRC_PATH, path.join(stageDir, "src"), { recursive: true, force: true });
 }
 
+function writeBuildFlags(stageDir, mode) {
+  assertMode(mode);
+
+  const buildFlagsPath = path.join(stageDir, BUILD_FLAGS_PATH);
+  const currentSource = fs.readFileSync(buildFlagsPath, "utf8");
+  const nextSource = currentSource.replace(
+    /const DEFAULT_IS_DEVELOPMENT = (true|false);/,
+    `const DEFAULT_IS_DEVELOPMENT = ${mode === "dev" ? "true" : "false"};`
+  );
+
+  if (nextSource === currentSource && !currentSource.includes(`const DEFAULT_IS_DEVELOPMENT = ${mode === "dev" ? "true" : "false"};`)) {
+    throw new Error(`Unable to update build flags in: ${buildFlagsPath}`);
+  }
+
+  fs.writeFileSync(buildFlagsPath, nextSource, "utf8");
+}
+
 function pruneTargetFiles(target, stageDir) {
   if (target === "firefox") {
     fs.rmSync(path.join(stageDir, "src", "platform", "chrome"), { recursive: true, force: true });
@@ -230,17 +255,29 @@ function writeDeterministicZip({ stageDir, outputPath }) {
   });
 }
 
-async function packageExtension({ target, outputName } = {}) {
+function stageExtension({ target, mode = "dev" } = {}) {
   assertTarget(target);
+  assertMode(mode);
   assertPackagingInputs();
 
-  const safeOutputName = outputName == null ? undefined : assertSafeOutputName(outputName);
   const stageDir = prepareStage(target);
 
   copyExtensionSources(stageDir);
 
   const { manifest } = writeManifest(target, stageDir);
+  writeBuildFlags(stageDir, mode);
   pruneTargetFiles(target, stageDir);
+
+  return {
+    manifest,
+    mode,
+    stageDir
+  };
+}
+
+async function packageExtension({ target, outputName } = {}) {
+  const safeOutputName = outputName == null ? undefined : assertSafeOutputName(outputName);
+  const { manifest, stageDir } = stageExtension({ target, mode: "prod" });
 
   const resolvedOutputName = normalizeOutputName(target, safeOutputName, manifest.version);
   const outputPath = path.join(DIST_DIR, resolvedOutputName);
@@ -277,6 +314,7 @@ module.exports = {
   DIST_DIR,
   FIXED_ZIP_DATE,
   STABLE_FILE_MODE,
+  assertMode,
   assertSafeOutputName,
   assertTarget,
   collectStageFiles,
@@ -284,5 +322,7 @@ module.exports = {
   packageExtension,
   parseArgs,
   pruneTargetFiles,
+  stageExtension,
+  writeBuildFlags,
   writeDeterministicZip
 };
