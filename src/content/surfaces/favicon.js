@@ -2,7 +2,6 @@
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../../shared/runtime.js");
   const appsApi = globalScope.MakeGoogleFlatAgain?.apps || require("../../shared/apps.js");
   const debugApi = globalScope.MakeGoogleFlatAgain?.debugLogger || require("../debug-logger.js");
-  const guardsApi = globalScope.MakeGoogleFlatAgain?.guards || require("../../shared/guards.js");
   const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../../shared/settings.js");
   const surfaceRegistry = globalScope.MakeGoogleFlatAgain?.surfaceRegistry || require("../surface-registry.js");
   const logger = debugApi.create("favicon");
@@ -47,8 +46,8 @@
     return window.setTimeout(callback, Math.max(1000, next.getTime() - now.getTime()));
   }
 
-  function shouldKeepObserverActive({ paused, app, hasHead }) {
-    return !paused && Boolean(app) && Boolean(hasHead);
+  function shouldKeepObserverActive({ app, hasHead }) {
+    return Boolean(app) && Boolean(hasHead);
   }
 
   function start(context) {
@@ -156,12 +155,11 @@
     }
 
     function apply() {
-      const paused = guardsApi.shouldPauseOnPage(window.location);
       const app = getCurrentApp();
       const hasHead = Boolean(document.head);
 
-      if (!shouldKeepObserverActive({ paused, app, hasHead })) {
-        cleanup(paused ? "paused" : !hasHead ? "missing-head" : "no-app");
+      if (!shouldKeepObserverActive({ app, hasHead })) {
+        cleanup(!hasHead ? "missing-head" : "no-app");
         return;
       }
 
@@ -178,7 +176,6 @@
         hardLock,
         href,
         managedIcons: document.querySelectorAll(MANAGED_ICON_SELECTOR).length,
-        paused,
         readyState: document.readyState,
         type
       });

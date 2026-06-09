@@ -6,7 +6,7 @@
   const DOCS_SHARED_ACTIVE_ID = "docs-shared";
   const DOCS_SHARED_MATCH = { hostname: "docs.google.com", pathnamePrefixes: ["/"] };
 
-  if (!extension?.apps || !extension?.guards || !extension?.settings || !extension?.surfaceRegistry) {
+  if (!extension?.apps || !extension?.settings || !extension?.surfaceRegistry) {
     return;
   }
 
@@ -39,7 +39,6 @@
 
   function updatePageAttributes(options) {
     const extensionEnabled = options?.enabled !== false;
-    const pauseRule = extension.guards.getPauseRule(window.location);
     const matchingApps = extension.apps.findMatchingApps(window.location).filter((app) => {
       return extensionEnabled && extension.settings.appEnabled(app.id, options);
     });
@@ -50,12 +49,6 @@
       setDocumentAttribute("data-mgfa-disabled", "1");
     } else {
       removeDocumentAttribute("data-mgfa-disabled");
-    }
-
-    if (pauseRule) {
-      setDocumentAttribute("data-mgfa-paused", pauseRule.id);
-    } else {
-      removeDocumentAttribute("data-mgfa-paused");
     }
 
     if (activeTargetIds.length > 0) {
@@ -75,7 +68,6 @@
       enabledPrimaryApp: primaryApp && extension.settings.appEnabled(primaryApp.id, options) ? primaryApp.id : null,
       matchingApps: matchingApps.map((app) => app.id),
       matchingTargets: activeTargetIds,
-      pauseRule: pauseRule?.id || null,
       pathname: window.location.pathname,
       readyState: document.readyState
     });

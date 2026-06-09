@@ -2,7 +2,6 @@
   const runtime = globalScope.__MGFA_RUNTIME__ || require("../../shared/runtime.js");
   const appsApi = globalScope.MakeGoogleFlatAgain?.apps || require("../../shared/apps.js");
   const debugApi = globalScope.MakeGoogleFlatAgain?.debugLogger || require("../debug-logger.js");
-  const guardsApi = globalScope.MakeGoogleFlatAgain?.guards || require("../../shared/guards.js");
   const settingsApi = globalScope.MakeGoogleFlatAgain?.settings || require("../../shared/settings.js");
   const surfaceRegistry = globalScope.MakeGoogleFlatAgain?.surfaceRegistry || require("../surface-registry.js");
   const logger = debugApi.create("app-icon-surfaces");
@@ -150,9 +149,8 @@ ${beforeSelectors} {
     }
 
     function apply() {
-      const paused = guardsApi.shouldPauseOnPage(window.location);
-      if (paused || !document.documentElement) {
-        cleanup(paused ? "paused" : "missing-root");
+      if (!document.documentElement) {
+        cleanup("missing-root");
         return;
       }
 

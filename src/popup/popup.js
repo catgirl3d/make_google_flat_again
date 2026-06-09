@@ -1,7 +1,7 @@
 (function renderPopup() {
   const extension = globalThis.MakeGoogleFlatAgain;
 
-  if (!extension?.apps || !extension?.guards || !extension?.settings || !extension?.runtime) {
+  if (!extension?.apps || !extension?.settings || !extension?.runtime) {
     return;
   }
 
@@ -10,8 +10,6 @@
   const extensionEnabledInput = document.getElementById("extension-enabled");
   const extensionStatusText = document.getElementById("extension-status-text");
   const extensionStatusGlow = document.getElementById("extension-status-glow");
-  const guardCountElement = document.getElementById("guard-count");
-  const guardListElement = document.getElementById("guard-list");
   const saveStatusElement = document.getElementById("save-status");
   const extensionApi = extension.runtime.getExtensionApi();
  
@@ -65,23 +63,7 @@
     return item;
   }
  
-  function createGuardItem(rule) {
-    const item = document.createElement("li");
-    item.className = "guard-item";
- 
-    const title = document.createElement("span");
-    title.className = "item-name";
-    title.textContent = rule.label;
- 
-    const description = document.createElement("span");
-    description.className = "item-meta";
-    description.textContent = rule.description;
- 
-    item.appendChild(title);
-    item.appendChild(description);
-    return item;
-  }
- 
+
   function updateStatus(message, tone) {
     statusMessage = message || "";
     statusTone = tone || "info";
@@ -143,11 +125,6 @@
     syncStatusUi();
     renderApps();
 
-    guardCountElement.textContent = String(extension.guards.pauseRules.length);
-
-    for (const rule of extension.guards.pauseRules) {
-      guardListElement.appendChild(createGuardItem(rule));
-    }
 
     extensionEnabledInput.addEventListener("change", () => {
       void updateOptions((nextOptions) => {

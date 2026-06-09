@@ -9,7 +9,6 @@ const MODULES_TO_RESET = [
   "../src/shared/app-registry.js",
   "../src/shared/apps.js",
   "../src/shared/settings.js",
-  "../src/shared/guards.js",
   "../src/content/logo-probe.js",
   MAIN_PATH
 ];
@@ -137,7 +136,6 @@ function createPageEnvironment({ location, readyState = "complete" }) {
   const registryApi = require("../src/shared/app-registry.js");
   const appsApi = require("../src/shared/apps.js");
   const settingsApi = require("../src/shared/settings.js");
-  const guardsApi = require("../src/shared/guards.js");
   const optionsDeferred = createDeferred();
   const windowListeners = new Map();
   const documentElement = createDocumentElement();
@@ -191,7 +189,6 @@ function createPageEnvironment({ location, readyState = "complete" }) {
     },
     appRegistry: registryApi,
     apps: appsApi,
-    guards: guardsApi,
     settings: {
       ...settingsApi,
       getOptions() {
@@ -330,14 +327,13 @@ test("real main observeOptions callback refreshes attributes without targets dep
   assert.equal(page.refreshedContexts[1].meta.reason, "options-changed");
 });
 
-test("real main pause state does not replace active/app state", async () => {
+test("real main on Calendar settings keeps normal active/app state", async () => {
   const page = createPageEnvironment({
     location: { hostname: "calendar.google.com", pathname: "/settings" }
   });
 
   await page.resolveOptions({ enabled: true, apps: {} });
 
-  assert.equal(page.documentElement.getAttribute("data-mgfa-paused"), "calendar-sensitive-screens");
   assert.equal(page.documentElement.getAttribute("data-mgfa-active"), "calendar");
   assert.equal(page.documentElement.getAttribute("data-mgfa-app"), "calendar");
 });

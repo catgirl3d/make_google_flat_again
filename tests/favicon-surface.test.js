@@ -26,8 +26,7 @@ test("relIsIcon ignores unrelated rel values with icon substring noise", () => {
 });
 
 test("favicon observer only stays active while the surface is enabled and attached", () => {
-  assert.equal(shouldKeepObserverActive({ paused: false, app: { id: "docs" }, hasHead: true }), true);
-  assert.equal(shouldKeepObserverActive({ paused: true, app: { id: "docs" }, hasHead: true }), false);
-  assert.equal(shouldKeepObserverActive({ paused: false, app: null, hasHead: true }), false);
-  assert.equal(shouldKeepObserverActive({ paused: false, app: { id: "docs" }, hasHead: false }), false);
+  assert.equal(shouldKeepObserverActive({ app: { id: "docs" }, hasHead: true }), true);
+  assert.equal(shouldKeepObserverActive({ app: null, hasHead: true }), false);
+  assert.equal(shouldKeepObserverActive({ app: { id: "docs" }, hasHead: false }), false);
 });
