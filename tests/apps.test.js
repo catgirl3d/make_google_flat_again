@@ -73,14 +73,21 @@ test("calendar asset path is day-aware", () => {
   assert.equal(getAssetPath("calendar", { dayNumber: 31 }), "assets/icons/calendar/calendar-31.webp");
 });
 
-test("keep keeps its base asset outside the side panel override", () => {
+test("keep keeps its base asset outside page-specific overrides", () => {
   assert.equal(getAssetPath("keep"), "assets/icons/apps/keep-classic.svg");
+  assert.equal(getAppById("keep").surfaces.favicon.assetPath, "assets/icons/apps/keep_icon_1.svg");
   assert.equal(getAppById("keep").surfaces.sidePanel.assetPath, "assets/icons/apps/keep-classic-square.svg");
+});
+
+test("tasks is opted into favicon replacement", () => {
+  assert.deepEqual(getAppById("tasks").surfaces.favicon, {});
 });
 
 test("surface registry in app config stays centralized", () => {
   assert.deepEqual(getAppsWithSurface("header").map((app) => app.id), []);
+  assert.deepEqual(getAppsWithSurface("productLogo").map((app) => app.id), ["calendar"]);
   assert.deepEqual(getAppsWithSurface("sidePanel").map((app) => app.id), ["calendar", "keep", "tasks", "maps"]);
+  assert.deepEqual(getAppsWithSurface("sidePanelLoading").map((app) => app.id), ["keep", "tasks"]);
   assert.deepEqual(getAppsWithSurface("docsHomescreenMenu").map((app) => app.id), [
     "drive",
     "docs",
@@ -107,6 +114,10 @@ test("surface registry in app config stays centralized", () => {
 });
 
 test("app launcher selectors match products by href and pid instead of localized labels", () => {
+  assert.deepEqual(getAppById("calendar").surfaces.productLogo.selectors, [
+    'img[src*="/images/branding/productlogos/calendar_2026_"]',
+    'img[srcset*="/images/branding/productlogos/calendar_2026_"]'
+  ]);
   assert.deepEqual(getAppById("drive").surfaces.appLauncher.selectors, [
     'a.tX9u1b[href*="drive.google.com"] .CgwTDb .MrEfLc',
     'a.tX9u1b[data-pid="49"] .CgwTDb .MrEfLc'
@@ -143,6 +154,13 @@ test("app launcher selectors match products by href and pid instead of localized
     '.Yb-Il-d-c-j[style*="tasks_"]',
     '.aT5-aOt-I-JX-Jw[style*="tasks_"]'
   ]);
+  assert.deepEqual(getAppById("tasks").surfaces.sidePanelLoading.selectors, [
+    '[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_tasks_"]'
+  ]);
+  assert.deepEqual(getAppById("keep").surfaces.sidePanelLoading.selectors, [
+    '[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_keep_"]'
+  ]);
+  assert.equal(getAppById("keep").surfaces.sidePanelLoading.assetPath, "assets/icons/apps/keep-classic-square.svg");
 });
 
 test("apps config no longer carries late header runtime metadata", () => {
@@ -155,7 +173,7 @@ test("managed features registry returns expected apps and features", () => {
   const appsWithHeader = getAppsWithManagedFeature("headerStaticCss");
   assert.deepEqual(
     appsWithHeader.map((app) => app.id),
-    ["gmail", "drive", "docs", "sheets", "slides", "forms", "tasks"]
+    ["gmail", "drive", "docs", "sheets", "slides", "forms", "vids", "meet", "chat", "keep", "tasks"]
   );
 
   for (const app of appsWithHeader) {

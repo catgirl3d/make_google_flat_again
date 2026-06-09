@@ -80,9 +80,12 @@ test("built Firefox manifest keeps Firefox-only background wiring and dynamic he
   assert.equal(manifest.permissions.includes("scripting"), true);
   assert.equal(manifest.host_permissions.includes("https://www.gstatic.com/*"), false);
   assert.equal(manifest.host_permissions.includes("https://mail.google.com/*"), true);
+  assert.equal(manifest.host_permissions.includes("https://chat.google.com/*"), true);
   assert.equal(manifest.host_permissions.includes("https://tasks.google.com/*"), true);
+  assert.equal(manifest.host_permissions.includes("https://keep.google.com/*"), true);
   assert.equal(manifest.host_permissions.includes("https://drive.google.com/*"), true);
   assert.equal(manifest.host_permissions.includes("https://docs.google.com/*"), true);
+  assert.equal(manifest.host_permissions.includes("https://meet.google.com/*"), true);
   assert.equal(manifest.browser_specific_settings.gecko.id, "make-google-flat-again@catgirl3d.github.io");
   assert.deepEqual(
     manifest.content_scripts.filter((entry) => Array.isArray(entry.css) && entry.css.some((file) => file.includes("header-"))),
@@ -99,7 +102,10 @@ test("built Chrome manifest keeps Chrome-only background wiring and scripting pe
   assert.equal(Object.prototype.hasOwnProperty.call(manifest.background, "scripts"), false);
   assert.equal(manifest.permissions.includes("scripting"), true);
   assert.equal(manifest.host_permissions.includes("https://mail.google.com/*"), true);
+  assert.equal(manifest.host_permissions.includes("https://chat.google.com/*"), true);
   assert.equal(manifest.host_permissions.includes("https://tasks.google.com/*"), true);
+  assert.equal(manifest.host_permissions.includes("https://keep.google.com/*"), true);
+  assert.equal(manifest.host_permissions.includes("https://meet.google.com/*"), true);
   assert.equal(Object.prototype.hasOwnProperty.call(manifest, "browser_specific_settings"), false);
   assert.deepEqual(
     manifest.content_scripts.filter((entry) => Array.isArray(entry.css) && entry.css.some((file) => file.includes("header-"))),

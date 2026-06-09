@@ -1,0 +1,7 @@
+#sdgBod > img[src*="/meet/icons/logo_meet_2026_"],
+#sdgBod > img[srcset*="/meet/icons/logo_meet_2026_"],
+img[src*="/meet/icons/logo_meet_2026_"],
+img[srcset*="/meet/icons/logo_meet_2026_"] {
+  --mgfa-logo-source: "header-meet-lockup";
+  content: url("../../../assets/icons/apps/logo_meet.png") !important;
+}

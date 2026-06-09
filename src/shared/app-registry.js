@@ -26,6 +26,13 @@
     };
   }
 
+  function createProductLogoSurface(selectors, sourceMarker) {
+    return {
+      selectors: [...selectors],
+      sourceMarker
+    };
+  }
+
   const apps = [
     {
       id: "gmail",
@@ -53,6 +60,10 @@
       surfaces: {
         favicon: { hardLock: true },
         appLauncher: createAppLauncherSurface("24", "calendar.google.com"),
+        productLogo: createProductLogoSurface([
+          'img[src*="/images/branding/productlogos/calendar_2026_"]',
+          'img[srcset*="/images/branding/productlogos/calendar_2026_"]'
+        ], "header-calendar"),
         sidePanel: {
           iconSize: 20,
           selectors: [
@@ -175,6 +186,14 @@
       surfaces: {
         appLauncher: createAppLauncherSurface("682", "docs.google.com/videos"),
         docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-vids-2026-24")
+      },
+      managed: {
+        headerStaticCss: {
+          scriptId: "mgfa-header-vids",
+          matches: ["https://docs.google.com/videos/*"],
+          cssFile: "src/content/styles/header-vids.css",
+          runAt: "document_start"
+        }
       }
     },
     {
@@ -185,6 +204,14 @@
       surfaces: {
         favicon: {},
         appLauncher: createAppLauncherSurface("411", "meet.google.com")
+      },
+      managed: {
+        headerStaticCss: {
+          scriptId: "mgfa-header-meet",
+          matches: ["https://meet.google.com/*"],
+          cssFile: "src/content/styles/header-meet.css",
+          runAt: "document_start"
+        }
       }
     },
     {
@@ -195,6 +222,14 @@
       surfaces: {
         favicon: {},
         appLauncher: createAppLauncherSurface("385", "chat.google.com")
+      },
+      managed: {
+        headerStaticCss: {
+          scriptId: "mgfa-header-chat",
+          matches: ["https://chat.google.com/*"],
+          cssFile: "src/content/styles/header-chat.css",
+          runAt: "document_start"
+        }
       }
     },
     {
@@ -203,8 +238,17 @@
       asset: { type: "svg", path: "assets/icons/apps/keep-classic.svg" },
       matches: [{ hostname: "keep.google.com", pathnamePrefixes: ["/"] }],
       surfaces: {
-        favicon: {},
+        favicon: {
+          assetPath: "assets/icons/apps/keep_icon_1.svg"
+        },
         appLauncher: createAppLauncherSurface("136", "keep.google.com"),
+        sidePanelLoading: {
+          assetPath: "assets/icons/apps/keep-classic-square.svg",
+          iconSize: 128,
+          selectors: [
+            '[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_keep_"]'
+          ]
+        },
         sidePanel: {
           assetPath: "assets/icons/apps/keep-classic-square.svg",
           iconSize: 20,
@@ -218,6 +262,14 @@
             '.aT5-aOt-I-JX-Jw[style*="keep_"]'
           ]
         }
+      },
+      managed: {
+        headerStaticCss: {
+          scriptId: "mgfa-header-keep",
+          matches: ["https://keep.google.com/*"],
+          cssFile: "src/content/styles/header-keep.css",
+          runAt: "document_start"
+        }
       }
     },
     {
@@ -227,6 +279,7 @@
       matches: [{ hostname: "tasks.google.com", pathnamePrefixes: ["/tasks"] }],
       urlIncludes: ["tasks.google.com/tasks"],
       surfaces: {
+        favicon: {},
         appLauncher: createAppLauncherSurface("39", "tasks.google.com/tasks"),
         sidePanel: {
           iconSize: 20,
@@ -238,6 +291,12 @@
             '[style*="tasks_2026_2x"]',
             '.Yb-Il-d-c-j[style*="tasks_"]',
             '.aT5-aOt-I-JX-Jw[style*="tasks_"]'
+          ]
+        },
+        sidePanelLoading: {
+          iconSize: 128,
+          selectors: [
+            '[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_tasks_"]'
           ]
         }
       },

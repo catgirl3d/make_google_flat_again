@@ -1,0 +1,23 @@
+a[href="/home"] > img[src*="/ui/v1/icons/mail/chatlogo/chat_2026_lockup_"],
+a[href="/home"] > img[srcset*="/ui/v1/icons/mail/chatlogo/chat_2026_lockup_"],
+img[src*="/ui/v1/icons/mail/chatlogo/chat_2026_lockup_"],
+img[srcset*="/ui/v1/icons/mail/chatlogo/chat_2026_lockup_"] {
+  --mgfa-logo-source: "header-chat-lockup";
+  content: url("../../../assets/icons/apps/logo_chat.png") !important;
+}
+
+#loading img[src*="/ui/v1/icons/mail/chatlogo/"],
+#loading img[srcset*="/ui/v1/icons/mail/chatlogo/"] {
+  --mgfa-logo-source: "header-chat-loading";
+  content: url("../../../assets/icons/apps/chat-classic.svg") !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.YFKohd > img[src*="/dynamite/images/product/chat_2026_220dp"],
+img[src*="/dynamite/images/product/chat_2026_220dp"] {
+  --mgfa-logo-source: "header-chat-hero";
+  content: url("../../../assets/icons/apps/chat-classic.svg") !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}

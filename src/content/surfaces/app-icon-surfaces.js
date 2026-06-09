@@ -9,20 +9,20 @@
   const STYLE_ID = "mgfa-app-icon-surfaces-style";
   const ATTR_NAME = "data-mgfa-app-icon-surfaces";
   // These selectors share one style element and refresh cycle, so they stay in one runtime surface.
-  const APP_ICON_SURFACE_NAMES = ["sidePanel", "appLauncher", "docsHomescreenMenu"];
+  const APP_ICON_SURFACE_NAMES = ["sidePanel", "sidePanelLoading", "appLauncher", "docsHomescreenMenu", "productLogo"];
   let refreshSurface = () => {};
 
   function escapeCssUrl(url) {
     return String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   }
 
-  function getSurfaceAssetPath(app, surfaceName) {
-    return app.surfaces[surfaceName]?.assetPath || appsApi.getAssetPath(app);
+  function getSurfaceAssetPath(app, surfaceName, options) {
+    return app.surfaces[surfaceName]?.assetPath || appsApi.getAssetPath(app, options);
   }
 
-  function buildReplacementRule(app, surfaceName) {
+  function buildReplacementRule(app, surfaceName, options) {
     const surfaceConfig = app.surfaces[surfaceName];
-    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, surfaceName)));
+    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, surfaceName, options)));
     const iconSize = `${surfaceConfig.iconSize || 20}px`;
     const selectors = surfaceConfig.selectors.join(",\n");
 
@@ -36,9 +36,9 @@ ${selectors} {
 `.trim();
   }
 
-  function buildDocsHomescreenMenuRule(app) {
+  function buildDocsHomescreenMenuRule(app, surfaceName, options) {
     const surfaceConfig = app.surfaces.docsHomescreenMenu;
-    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, "docsHomescreenMenu")));
+    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, "docsHomescreenMenu", options)));
     const iconSize = `${surfaceConfig.iconSize || 24}px`;
     const selectors = surfaceConfig.selectors.join(",\n");
     const beforeSelectors = surfaceConfig.selectors
@@ -64,6 +64,21 @@ ${beforeSelectors} {
 `.trim();
   }
 
+  function buildProductLogoRule(app, surfaceName, options) {
+    const surfaceConfig = app.surfaces[surfaceName];
+    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, surfaceName, options)));
+    const selectors = surfaceConfig.selectors.join(",\n");
+    const sourceMarker = surfaceConfig.sourceMarker
+      ? `  --mgfa-logo-source: "${surfaceConfig.sourceMarker}" !important;\n`
+      : "";
+
+    return `
+${selectors} {
+${sourceMarker}  content: url("${iconUrl}") !important;
+}
+`.trim();
+  }
+
   function getEnabledSurfaceApps(surfaceName, options) {
     return appsApi
       .getAppsWithSurface(surfaceName)
@@ -71,17 +86,22 @@ ${beforeSelectors} {
   }
 
   function buildSurfaceCss(surfaceName, options) {
-    const ruleBuilder = surfaceName === "docsHomescreenMenu"
-      ? buildDocsHomescreenMenuRule
-      : buildReplacementRule;
+    const ruleBuilder = {
+      docsHomescreenMenu: buildDocsHomescreenMenuRule,
+      productLogo: buildProductLogoRule
+    }[surfaceName] || buildReplacementRule;
 
     return getEnabledSurfaceApps(surfaceName, options)
-      .map((app) => ruleBuilder(app, surfaceName))
+      .map((app) => ruleBuilder(app, surfaceName, options))
       .join("\n\n");
   }
 
   function buildSidePanelCss(options) {
     return buildSurfaceCss("sidePanel", options);
+  }
+
+  function buildSidePanelLoadingCss(options) {
+    return buildSurfaceCss("sidePanelLoading", options);
   }
 
   function buildAppLauncherCss(options) {
@@ -90,6 +110,10 @@ ${beforeSelectors} {
 
   function buildDocsHomescreenMenuCss(options) {
     return buildSurfaceCss("docsHomescreenMenu", options);
+  }
+
+  function buildProductLogoCss(options) {
+    return buildSurfaceCss("productLogo", options);
   }
 
   function buildManagedSurfaceState(options) {
@@ -173,7 +197,9 @@ ${beforeSelectors} {
       document.documentElement.setAttribute(ATTR_NAME, "1");
       logger.snapshot("applied", {
         assets: enabledSurfaceEntries.reduce((result, entry) => {
-          result[`${entry.surfaceName}:${entry.app.id}`] = runtime.getRuntimeUrl(getSurfaceAssetPath(entry.app, entry.surfaceName));
+          result[`${entry.surfaceName}:${entry.app.id}`] = runtime.getRuntimeUrl(
+            getSurfaceAssetPath(entry.app, entry.surfaceName, context.options)
+          );
           return result;
         }, {}),
         cssLength: cssText.length,
@@ -215,8 +241,10 @@ ${beforeSelectors} {
     refresh,
     escapeCssUrl,
     buildSidePanelCss,
+    buildSidePanelLoadingCss,
     buildAppLauncherCss,
-    buildDocsHomescreenMenuCss
+    buildDocsHomescreenMenuCss,
+    buildProductLogoCss
   };
 
   surfaceRegistry.register(api);

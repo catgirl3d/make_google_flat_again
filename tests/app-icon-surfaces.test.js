@@ -4,8 +4,10 @@ const assert = require("node:assert/strict");
 const {
   escapeCssUrl,
   buildSidePanelCss,
+  buildSidePanelLoadingCss,
   buildAppLauncherCss,
-  buildDocsHomescreenMenuCss
+  buildDocsHomescreenMenuCss,
+  buildProductLogoCss
 } = require("../src/content/surfaces/app-icon-surfaces.js");
 
 test("escapeCssUrl escapes quotes and slashes", () => {
@@ -40,6 +42,33 @@ test("buildSidePanelCss returns empty string if disabled globally", () => {
       keep: true,
       tasks: true,
       maps: true
+    }
+  });
+
+  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
+});
+
+test("buildSidePanelLoadingCss includes the large Tasks and Keep loading icon selectors", () => {
+  const css = buildSidePanelLoadingCss({
+    enabled: true,
+    apps: {
+      keep: true,
+      tasks: true
+    }
+  });
+
+  assert.ok(css.includes('[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_tasks_"]'), "Should target the large Tasks loading icon");
+  assert.ok(css.includes('[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_keep_"]'), "Should target the large Keep loading icon");
+  assert.ok(css.includes('background-size: 128px 128px !important;'), "Should size the loading icon replacement to 128px");
+  assert.ok(css.includes('tasks-classic.svg'), "Should use the Tasks classic asset for the large loading icon");
+  assert.ok(css.includes('keep-classic-square.svg'), "Should use the square Keep asset for the large loading icon");
+});
+
+test("buildSidePanelLoadingCss returns empty string if disabled globally", () => {
+  const css = buildSidePanelLoadingCss({
+    enabled: false,
+    apps: {
+      tasks: true
     }
   });
 
@@ -106,6 +135,34 @@ test("buildDocsHomescreenMenuCss returns empty string if disabled globally", () 
     apps: {
       drive: true,
       docs: true
+    }
+  });
+
+  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
+});
+
+test("buildProductLogoCss uses the day-aware Calendar asset path", () => {
+  const css = buildProductLogoCss({
+    enabled: true,
+    dayNumber: 9,
+    apps: {
+      calendar: true
+    }
+  });
+
+  assert.ok(css.includes('img[src*="/images/branding/productlogos/calendar_2026_"]'), "Should target Calendar productlogo images by src");
+  assert.ok(css.includes('img[srcset*="/images/branding/productlogos/calendar_2026_"]'), "Should target Calendar productlogo images by srcset");
+  assert.ok(css.includes('calendar-09.webp'), "Should use the day-aware Calendar asset for the supplied day number");
+  assert.ok(css.includes('--mgfa-logo-source: "header-calendar" !important;'), "Should keep the debug source marker for Calendar header replacements");
+  assert.ok(css.includes('content: url("assets/icons/calendar/calendar-09.webp") !important;'), "Should replace the product logo via content:url");
+});
+
+test("buildProductLogoCss returns empty string if disabled globally", () => {
+  const css = buildProductLogoCss({
+    enabled: false,
+    dayNumber: 9,
+    apps: {
+      calendar: true
     }
   });
 

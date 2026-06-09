@@ -13,8 +13,12 @@
     return /\bicon\b/i.test(String(rel || "")) || /apple-touch-icon|mask-icon/i.test(String(rel || ""));
   }
 
-  function getAppIconUrl(app) {
-    return runtime.getRuntimeUrl(appsApi.getAssetPath(app));
+  function getFaviconAssetPath(app, options) {
+    return app?.surfaces?.favicon?.assetPath || appsApi.getAssetPath(app, options);
+  }
+
+  function getAppIconUrl(app, options) {
+    return runtime.getRuntimeUrl(getFaviconAssetPath(app, options));
   }
 
   function getAppMimeType(app) {
@@ -167,7 +171,7 @@
 
       captureOriginalIcons();
 
-      const href = getAppIconUrl(app);
+      const href = getAppIconUrl(app, context.options);
       const type = getAppMimeType(app);
       const hardLock = Boolean(app.surfaces.favicon.hardLock);
 
@@ -314,6 +318,7 @@
     start,
     refresh,
     relIsIcon,
+    getFaviconAssetPath,
     getAppMimeType,
     shouldKeepObserverActive
   };

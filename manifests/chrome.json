@@ -5,9 +5,12 @@
   ],
   "host_permissions": [
     "https://mail.google.com/*",
+    "https://chat.google.com/*",
     "https://tasks.google.com/*",
+    "https://keep.google.com/*",
     "https://drive.google.com/*",
-    "https://docs.google.com/*"
+    "https://docs.google.com/*",
+    "https://meet.google.com/*"
   ],
   "background": {
     "service_worker": "src/background/background-chrome.js"

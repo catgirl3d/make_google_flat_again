@@ -1,0 +1,5 @@
+img[src*="/images/branding/productlogos/vids_2026/"],
+img[srcset*="/images/branding/productlogos/vids_2026/"] {
+  --mgfa-logo-source: "header-vids";
+  content: url("../../../assets/icons/apps/vids-classic.svg") !important;
+}

@@ -23,7 +23,7 @@ function loadHeaderStaticCss(registry) {
   return require("../src/background/header-static-css.js");
 }
 
-test("header static css definitions cover Gmail, Tasks, Drive, and the docs suite", () => {
+test("header static css definitions cover Gmail, Chat, Meet, Keep, Tasks, Drive, Vids, and the docs suite", () => {
   const { HEADER_SCRIPT_DEFINITIONS } = loadHeaderStaticCss();
 
   assert.deepEqual(
@@ -66,6 +66,30 @@ test("header static css definitions cover Gmail, Tasks, Drive, and the docs suit
         cssFile: "src/content/styles/header-forms.css"
       },
       {
+        appId: "vids",
+        id: "mgfa-header-vids",
+        matches: ["https://docs.google.com/videos/*"],
+        cssFile: "src/content/styles/header-vids.css"
+      },
+      {
+        appId: "meet",
+        id: "mgfa-header-meet",
+        matches: ["https://meet.google.com/*"],
+        cssFile: "src/content/styles/header-meet.css"
+      },
+      {
+        appId: "chat",
+        id: "mgfa-header-chat",
+        matches: ["https://chat.google.com/*"],
+        cssFile: "src/content/styles/header-chat.css"
+      },
+      {
+        appId: "keep",
+        id: "mgfa-header-keep",
+        matches: ["https://keep.google.com/*"],
+        cssFile: "src/content/styles/header-keep.css"
+      },
+      {
         appId: "tasks",
         id: "mgfa-header-tasks",
         matches: ["https://tasks.google.com/*"],
@@ -86,6 +110,10 @@ test("buildContentScripts returns every managed header CSS script by default", (
     "mgfa-header-sheets",
     "mgfa-header-slides",
     "mgfa-header-forms",
+    "mgfa-header-vids",
+    "mgfa-header-meet",
+    "mgfa-header-chat",
+    "mgfa-header-keep",
     "mgfa-header-tasks"
   ]);
 });
@@ -110,7 +138,11 @@ test("buildContentScripts excludes only disabled apps", () => {
   assert.deepEqual(scripts.map((script) => script.id), [
     "mgfa-header-drive",
     "mgfa-header-sheets",
-    "mgfa-header-forms"
+    "mgfa-header-forms",
+    "mgfa-header-vids",
+    "mgfa-header-meet",
+    "mgfa-header-chat",
+    "mgfa-header-keep"
   ]);
 });
 
@@ -139,15 +171,23 @@ test("sync forwards managed ids and desired scripts to the platform registry", a
     "mgfa-header-sheets",
     "mgfa-header-slides",
     "mgfa-header-forms",
+    "mgfa-header-vids",
+    "mgfa-header-meet",
+    "mgfa-header-chat",
+    "mgfa-header-keep",
     "mgfa-header-tasks"
   ]);
-  assert.deepEqual(result.activeAppIds, ["gmail", "drive", "sheets", "slides", "forms", "tasks"]);
+  assert.deepEqual(result.activeAppIds, ["gmail", "drive", "sheets", "slides", "forms", "vids", "meet", "chat", "keep", "tasks"]);
   assert.deepEqual(result.desiredScriptIds, [
     "mgfa-header-gmail",
     "mgfa-header-drive",
     "mgfa-header-sheets",
     "mgfa-header-slides",
     "mgfa-header-forms",
+    "mgfa-header-vids",
+    "mgfa-header-meet",
+    "mgfa-header-chat",
+    "mgfa-header-keep",
     "mgfa-header-tasks"
   ]);
   assert.equal(result.options.apps.docs, false);
@@ -165,7 +205,7 @@ test("sync reports skipped when content script registry is unavailable", async (
 
   assert.equal(result.skipped, true);
   assert.deepEqual(result.managedIds, headerStaticCss.MANAGED_SCRIPT_IDS);
-  assert.deepEqual(result.activeAppIds, ["gmail", "drive", "docs", "sheets", "slides", "forms", "tasks"]);
+  assert.deepEqual(result.activeAppIds, ["gmail", "drive", "docs", "sheets", "slides", "forms", "vids", "meet", "chat", "keep", "tasks"]);
   assert.deepEqual(result.desiredScriptIds, [
     "mgfa-header-gmail",
     "mgfa-header-drive",
@@ -173,6 +213,10 @@ test("sync reports skipped when content script registry is unavailable", async (
     "mgfa-header-sheets",
     "mgfa-header-slides",
     "mgfa-header-forms",
+    "mgfa-header-vids",
+    "mgfa-header-meet",
+    "mgfa-header-chat",
+    "mgfa-header-keep",
     "mgfa-header-tasks"
   ]);
   assert.deepEqual(result.desiredScripts.map((script) => script.id), [
@@ -182,6 +226,10 @@ test("sync reports skipped when content script registry is unavailable", async (
     "mgfa-header-sheets",
     "mgfa-header-slides",
     "mgfa-header-forms",
+    "mgfa-header-vids",
+    "mgfa-header-meet",
+    "mgfa-header-chat",
+    "mgfa-header-keep",
     "mgfa-header-tasks"
   ]);
 });
