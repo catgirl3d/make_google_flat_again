@@ -1,5 +1,7 @@
 # Classic Google Workspace Icons
 
+[![Firefox Add-on](https://img.shields.io/badge/Firefox_Add--ons-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/addon/classic-google-workspace-icons/)
+
 A cross-browser extension for restoring older, flatter, and more distinguishable Google Workspace icons instead of the new gradient redesign.
 
 <img src="./docs/img.jpeg" alt="Classic Google Workspace Icons concept" width="150" />
