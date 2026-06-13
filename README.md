@@ -1,41 +1,21 @@
 # Classic Google Workspace Icons
 
-[![Firefox Add-on](https://img.shields.io/badge/Firefox_Add--ons-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/addon/classic-google-workspace-icons/)
+<img src="./docs/make_google_flat_again.png" alt="Classic Google Workspace Icons concept" width="600" />
 
 A cross-browser extension for restoring older, flatter, and more distinguishable Google Workspace icons instead of the new gradient redesign.
 
-<img src="./docs/img.jpeg" alt="Classic Google Workspace Icons concept" width="150" />
+| Browser | Version | Download |
+| :--- | :--- | :--- |
+| **Firefox** | [![Firefox Add-on Version](https://img.shields.io/amo/v/classic-google-workspace-icons?color=orange&logo=firefox-browser)](https://addons.mozilla.org/addon/classic-google-workspace-icons/) | [![Download](https://img.shields.io/badge/Install%20for%20Firefox-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/addon/classic-google-workspace-icons/) |
 
-## Idea
+## Features
 
-This project is not a full "theme for all of Google". It is a targeted replacement of visual elements:
+This extension replaces the new gradient Google Workspace logos and assets with their classic, flatter, and more recognizable counterparts.
 
-- older app icons
-- specific sprites and SVG assets
-- CSS rules responsible for the new icons
-
-The base approach is local overrides through WebExtension content scripts and background-managed registrations, without a heavy build setup or unnecessary dependencies.
-
-## Goals
-
-- Firefox-first, with separate Chrome packaging
-- zero-dependency base
-- local assets and local logic
-- clear structure with target-specific packaging
-- the ability to fix icons app by app: Drive, Docs, Sheets, Gmail, and so on
-
-## Plan
-
-1. Build a list of Google Workspace surfaces that are actually worth fixing.
-2. Document the selectors, sprites, SVGs, and URLs involved in rendering the new icons.
-3. Replace them with older versions through local CSS/SVG overrides.
-4. Verify that this does not break adjacent flows or different `docs.google.com` products.
-5. Package it as Firefox and Chrome artifacts suitable for manual installation and store upload.
-
-## Principles
-
-- minimal changes
-- a single source of truth for target matching
+- **Selective App Replacement**: Toggle icon restoration individually for Gmail, Calendar, Drive, Docs, Sheets, Slides, Forms, Vids, Meet, Chat, Keep, Tasks, and Maps directly in the extension popup.
+- **Local & Lightweight**: No runtime external dependencies. All assets (icons and CSS rules) are bundled within the extension for instant loading.
+- **Privacy Focused**: No tracking, telemetry, or external network requests.
+- **Reliable Replacements**: Restores classic logos using CSS overrides, DOM updates, and managed content-script registration while keeping adjacent page flows intact.
 
 ## Manifest Layout
 
@@ -99,12 +79,12 @@ npm run package:firefox
 ```
 
 PowerShell scripts remain available only as optional Windows compatibility wrappers.
-The repository also pins exact npm versions in `package-lock.json` and blocks install scripts via `.npmrc`.
+The repository pins dependency versions in `package-lock.json` and blocks install scripts via `.npmrc`.
 
 Output artifacts:
 
-- Firefox package: `dist/make-google-flat-again-<version>-firefox.xpi`
-- Chrome package: `dist/make-google-flat-again-<version>-chrome.zip`
+- Firefox package: `dist/classic-google-workspace-icons-<version>-firefox.xpi`
+- Chrome package: `dist/classic-google-workspace-icons-<version>-chrome.zip`
 
 Staging directories:
 
@@ -147,5 +127,5 @@ For store submission, upload packaged files from `dist/`.
 
 - Favicon and app icon surface replacements are regular manifest content scripts.
 - Header/logo replacements are settings-aware dynamic registrations managed from background code.
-- After changing extension settings or reloading the extension, header/logo changes are guaranteed for new navigations and page reloads.
+- After changing extension settings or reloading the extension, header/logo changes apply on subsequent navigations and page reloads.
 - Already-open pages may need a manual reload to pick up header/logo changes. This is expected with the current architecture.
