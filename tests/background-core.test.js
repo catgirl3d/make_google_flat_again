@@ -24,14 +24,30 @@ async function flushAsyncWork(times = 4) {
   }
 }
 
-test("background core serializes repeated sync triggers", async () => {
+async function loadBackgroundCore({
+  buildFlags = { isDevelopment: false },
+  storedOptions = [],
+  getOptionsError = null,
+  headerSyncResult = null,
+  headerSyncImplementation = null
+} = {}) {
   clearBackgroundGlobals();
   delete require.cache[require.resolve("../src/background/background-core.js")];
 
-  const originalConsoleLog = console.log;
   let onInstalled = null;
-  let observedListener = null;
-  const pendingSyncs = [];
+  let onStartup = null;
+  let observedOptionsListener = null;
+  let observeOptionsExtensionApi = null;
+
+  const getOptionsCalls = [];
+  const headerSyncCalls = [];
+  const warningLogs = [];
+
+  const originalConsoleWarn = console.warn;
+  console.warn = (...args) => {
+    warningLogs.push(args);
+  };
+
   const extensionApi = {
     runtime: {
       onInstalled: {
@@ -40,242 +56,286 @@ test("background core serializes repeated sync triggers", async () => {
         }
       },
       onStartup: {
-        addListener() {}
-      }
-    }
-  };
-
-  globalThis.MakeGoogleFlatAgain = {
-    buildFlags: { isDevelopment: true },
-    runtime: {
-      getExtensionApi() {
-        return extensionApi;
-      }
-    },
-    settings: {
-      getOptions() {
-        return Promise.resolve({ enabled: true, apps: {} });
-      },
-      observeOptions(listener) {
-        observedListener = listener;
-        return () => {};
-      }
-    },
-    headerStaticCss: {
-      sync() {
-        const deferred = createDeferred();
-        pendingSyncs.push(deferred);
-        return deferred.promise;
-      }
-    },
-    contentScriptRegistry: {
-      syncManagedCssScripts() {
-        return Promise.resolve();
-      }
-    }
-  };
-
-  console.log = () => {};
-
-  try {
-    require("../src/background/background-core.js");
-
-    await flushAsyncWork();
-
-    assert.equal(typeof observedListener, "function");
-    assert.equal(typeof onInstalled, "function");
-    assert.equal(pendingSyncs.length, 1);
-
-    onInstalled();
-    await flushAsyncWork();
-
-    assert.equal(pendingSyncs.length, 1);
-
-    pendingSyncs[0].resolve();
-    await flushAsyncWork();
-
-    assert.equal(pendingSyncs.length, 2);
-
-    pendingSyncs[1].resolve();
-    await flushAsyncWork();
-  } finally {
-    console.log = originalConsoleLog;
-    clearBackgroundGlobals();
-  }
-});
-
-test("background core logs successful header static CSS sync summaries", async () => {
-  clearBackgroundGlobals();
-  delete require.cache[require.resolve("../src/background/background-core.js")];
-
-  const capturedLogs = [];
-  const originalConsoleLog = console.log;
-  const extensionApi = {
-    runtime: {
-      onInstalled: { addListener() {} },
-      onStartup: { addListener() {} }
-    }
-  };
-
-  console.log = (...args) => {
-    capturedLogs.push(args);
-  };
-
-  globalThis.MakeGoogleFlatAgain = {
-    buildFlags: { isDevelopment: true },
-    runtime: {
-      getExtensionApi() {
-        return extensionApi;
-      }
-    },
-    settings: {
-      getOptions() {
-        return Promise.resolve({ enabled: true, apps: { docs: false } });
-      },
-      observeOptions() {
-        return () => {};
-      }
-    },
-    headerStaticCss: {
-      sync() {
-        return Promise.resolve({
-          activeAppIds: ["gmail", "tasks"],
-          addedIds: ["mgfa-header-tasks"],
-          desiredScriptIds: ["mgfa-header-gmail", "mgfa-header-tasks"],
-          removedIds: [],
-          skipped: false,
-          usedFallback: false
-        });
-      }
-    },
-    contentScriptRegistry: {
-      syncManagedCssScripts() {
-        return Promise.resolve();
-      }
-    }
-  };
-
-  try {
-    require("../src/background/background-core.js");
-    await flushAsyncWork();
-
-    assert.deepEqual(capturedLogs, [
-      [
-        "[mgfa/background] header static CSS sync",
-        {
-          activeAppIds: ["gmail", "tasks"],
-          addedIds: ["mgfa-header-tasks"],
-          desiredScriptIds: ["mgfa-header-gmail", "mgfa-header-tasks"],
-          removedIds: [],
-          skipped: false,
-          usedFallback: false
+        addListener(listener) {
+          onStartup = listener;
         }
-      ]
+      }
+    }
+  };
+
+  const storedOptionsQueue = [...storedOptions];
+
+  globalThis.MakeGoogleFlatAgain = {
+    buildFlags,
+    runtime: {
+      getExtensionApi() {
+        return extensionApi;
+      }
+    },
+    settings: {
+      getOptions(api) {
+        getOptionsCalls.push(api);
+
+        if (getOptionsError) {
+          return Promise.reject(getOptionsError);
+        }
+
+        if (!storedOptionsQueue.length) {
+          return Promise.reject(new Error("missing stored options fixture"));
+        }
+
+        return Promise.resolve(storedOptionsQueue.shift());
+      },
+      observeOptions(listener, api) {
+        observedOptionsListener = listener;
+        observeOptionsExtensionApi = api;
+        return () => {};
+      }
+    },
+    headerStaticCss: {
+      sync(api, options) {
+        headerSyncCalls.push({ api, options });
+
+        if (typeof headerSyncImplementation === "function") {
+          return headerSyncImplementation(api, options);
+        }
+
+        return Promise.resolve(headerSyncResult);
+      }
+    }
+  };
+
+  require("../src/background/background-core.js");
+  await flushAsyncWork();
+
+  return {
+    extensionApi,
+    getOptionsCalls,
+    headerSyncCalls,
+    observeOptionsExtensionApi,
+    observedOptionsListener,
+    onInstalled,
+    onStartup,
+    warningLogs,
+    cleanup() {
+      console.warn = originalConsoleWarn;
+      clearBackgroundGlobals();
+      delete require.cache[require.resolve("../src/background/background-core.js")];
+    }
+  };
+}
+
+test("background core syncs stored options on initial load and wires lifecycle listeners", async () => {
+  const initialOptions = { enabled: true, apps: { gmail: true } };
+  const context = await loadBackgroundCore({ storedOptions: [initialOptions] });
+
+  try {
+    assert.equal(typeof context.onInstalled, "function");
+    assert.equal(typeof context.onStartup, "function");
+    assert.equal(typeof context.observedOptionsListener, "function");
+    assert.equal(context.observeOptionsExtensionApi, context.extensionApi);
+    assert.deepEqual(context.getOptionsCalls, [context.extensionApi]);
+    assert.deepEqual(context.headerSyncCalls, [
+      {
+        api: context.extensionApi,
+        options: initialOptions
+      }
     ]);
   } finally {
-    console.log = originalConsoleLog;
-    clearBackgroundGlobals();
+    context.cleanup();
   }
 });
 
-test("background core suppresses success logs in production mode", async () => {
-  clearBackgroundGlobals();
-  delete require.cache[require.resolve("../src/background/background-core.js")];
-
-  const capturedLogs = [];
-  const originalConsoleLog = console.log;
-  const extensionApi = {
-    runtime: {
-      onInstalled: { addListener() {} },
-      onStartup: { addListener() {} }
-    }
-  };
-
-  console.log = (...args) => {
-    capturedLogs.push(args);
-  };
-
-  globalThis.MakeGoogleFlatAgain = {
-    buildFlags: { isDevelopment: false },
-    runtime: {
-      getExtensionApi() {
-        return extensionApi;
-      }
-    },
-    settings: {
-      getOptions() {
-        return Promise.resolve({ enabled: true, apps: {} });
-      },
-      observeOptions() {
-        return () => {};
-      }
-    },
-    headerStaticCss: {
-      sync() {
-        return Promise.resolve({ skipped: false, usedFallback: false });
-      }
-    }
-  };
+test("background core reloads stored options for onInstalled and onStartup events", async () => {
+  const initialOptions = { enabled: true, apps: { gmail: true } };
+  const installedOptions = { enabled: false, apps: { docs: true } };
+  const startupOptions = { enabled: true, apps: { calendar: false } };
+  const context = await loadBackgroundCore({
+    storedOptions: [initialOptions, installedOptions, startupOptions]
+  });
 
   try {
-    require("../src/background/background-core.js");
+    context.onInstalled();
     await flushAsyncWork();
 
-    assert.deepEqual(capturedLogs, []);
+    context.onStartup();
+    await flushAsyncWork();
+
+    assert.deepEqual(context.getOptionsCalls, [
+      context.extensionApi,
+      context.extensionApi,
+      context.extensionApi
+    ]);
+    assert.deepEqual(context.headerSyncCalls, [
+      {
+        api: context.extensionApi,
+        options: initialOptions
+      },
+      {
+        api: context.extensionApi,
+        options: installedOptions
+      },
+      {
+        api: context.extensionApi,
+        options: startupOptions
+      }
+    ]);
   } finally {
-    console.log = originalConsoleLog;
-    clearBackgroundGlobals();
+    context.cleanup();
   }
 });
 
-test("background core keeps warning logs in production mode", async () => {
-  clearBackgroundGlobals();
-  delete require.cache[require.resolve("../src/background/background-core.js")];
-
-  const capturedWarnings = [];
-  const originalConsoleWarn = console.warn;
-  const extensionApi = {
-    runtime: {
-      onInstalled: { addListener() {} },
-      onStartup: { addListener() {} }
-    }
-  };
-
-  console.warn = (...args) => {
-    capturedWarnings.push(args);
-  };
-
-  globalThis.MakeGoogleFlatAgain = {
-    buildFlags: { isDevelopment: false },
-    runtime: {
-      getExtensionApi() {
-        return extensionApi;
-      }
-    },
-    settings: {
-      getOptions() {
-        return Promise.resolve({ enabled: true, apps: {} });
-      },
-      observeOptions() {
-        return () => {};
-      }
-    },
-    headerStaticCss: {
-      sync() {
-        return Promise.reject(new Error("broken sync"));
-      }
-    }
-  };
+test("background core syncs observer updates with the pushed options payload", async () => {
+  const initialOptions = { enabled: true, apps: {} };
+  const observedOptions = { enabled: true, apps: { meet: false, tasks: true } };
+  const context = await loadBackgroundCore({ storedOptions: [initialOptions] });
 
   try {
-    require("../src/background/background-core.js");
+    context.observedOptionsListener(observedOptions);
     await flushAsyncWork();
 
-    assert.equal(capturedWarnings.length, 1);
-    assert.equal(capturedWarnings[0][0], "[mgfa/background] header static CSS sync failed");
-    assert.match(String(capturedWarnings[0][1]?.message || capturedWarnings[0][1]), /broken sync/);
+    assert.deepEqual(context.getOptionsCalls, [context.extensionApi]);
+    assert.deepEqual(context.headerSyncCalls, [
+      {
+        api: context.extensionApi,
+        options: initialOptions
+      },
+      {
+        api: context.extensionApi,
+        options: observedOptions
+      }
+    ]);
   } finally {
-    console.warn = originalConsoleWarn;
-    clearBackgroundGlobals();
+    context.cleanup();
+  }
+});
+
+test("background core serializes lifecycle and observer sync work until the active sync completes", async () => {
+  const initialOptions = { enabled: true, apps: { gmail: true } };
+  const installedOptions = { enabled: true, apps: { docs: false } };
+  const startupOptions = { enabled: true, apps: { calendar: false } };
+  const observedOptions = { enabled: true, apps: { tasks: true } };
+  const pendingSyncs = [];
+  const context = await loadBackgroundCore({
+    storedOptions: [initialOptions, installedOptions, startupOptions],
+    headerSyncImplementation(api, options) {
+      const deferred = createDeferred();
+      pendingSyncs.push({ api, options, deferred });
+      return deferred.promise;
+    }
+  });
+
+  try {
+    assert.deepEqual(context.getOptionsCalls, [context.extensionApi]);
+    assert.deepEqual(context.headerSyncCalls, [
+      {
+        api: context.extensionApi,
+        options: initialOptions
+      }
+    ]);
+
+    context.onInstalled();
+    context.onStartup();
+    context.observedOptionsListener(observedOptions);
+    await flushAsyncWork();
+
+    assert.deepEqual(
+      context.getOptionsCalls,
+      [context.extensionApi],
+      "Should not read storage for later syncs before the active sync settles"
+    );
+    assert.deepEqual(
+      context.headerSyncCalls,
+      [
+        {
+          api: context.extensionApi,
+          options: initialOptions
+        }
+      ],
+      "Should not start later header syncs before the active sync settles"
+    );
+
+    pendingSyncs[0].deferred.resolve();
+    await flushAsyncWork();
+
+    assert.deepEqual(context.getOptionsCalls, [
+      context.extensionApi,
+      context.extensionApi
+    ]);
+    assert.deepEqual(context.headerSyncCalls[1], {
+      api: context.extensionApi,
+      options: installedOptions
+    });
+
+    pendingSyncs[1].deferred.resolve();
+    await flushAsyncWork();
+
+    assert.deepEqual(context.getOptionsCalls, [
+      context.extensionApi,
+      context.extensionApi,
+      context.extensionApi
+    ]);
+    assert.deepEqual(context.headerSyncCalls[2], {
+      api: context.extensionApi,
+      options: startupOptions
+    });
+
+    pendingSyncs[2].deferred.resolve();
+    await flushAsyncWork();
+
+    assert.deepEqual(context.getOptionsCalls, [
+      context.extensionApi,
+      context.extensionApi,
+      context.extensionApi
+    ]);
+    assert.deepEqual(context.headerSyncCalls[3], {
+      api: context.extensionApi,
+      options: observedOptions
+    });
+
+    pendingSyncs[3].deferred.resolve();
+    await flushAsyncWork();
+  } finally {
+    context.cleanup();
+  }
+});
+
+test("background core warns and skips header sync when settings lookup fails", async () => {
+  const failure = new Error("settings unavailable");
+  const context = await loadBackgroundCore({ getOptionsError: failure });
+
+  try {
+    assert.deepEqual(context.headerSyncCalls, []);
+    assert.deepEqual(context.warningLogs, [
+      ["[mgfa/background] settings sync failed", failure]
+    ]);
+  } finally {
+    context.cleanup();
+  }
+});
+
+test("background core warns when header static CSS sync fails", async () => {
+  const initialOptions = { enabled: true, apps: { docs: true } };
+  const failure = new Error("broken sync");
+  const context = await loadBackgroundCore({
+    storedOptions: [initialOptions],
+    headerSyncImplementation() {
+      return Promise.reject(failure);
+    }
+  });
+
+  try {
+    assert.deepEqual(context.getOptionsCalls, [context.extensionApi]);
+    assert.deepEqual(context.headerSyncCalls, [
+      {
+        api: context.extensionApi,
+        options: initialOptions
+      }
+    ]);
+    assert.deepEqual(context.warningLogs, [
+      ["[mgfa/background] header static CSS sync failed", failure]
+    ]);
+  } finally {
+    context.cleanup();
   }
 });

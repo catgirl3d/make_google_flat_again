@@ -1,170 +1,324 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const {
-  escapeCssUrl,
-  buildSidePanelCss,
-  buildSidePanelLoadingCss,
-  buildAppLauncherCss,
-  buildDocsHomescreenMenuCss,
-  buildProductLogoCss
-} = require("../src/content/surfaces/app-icon-surfaces.js");
+const MODULE_PATH = "../src/content/surfaces/app-icon-surfaces.js";
+const STYLE_ID = "mgfa-app-icon-surfaces-style";
+const ATTR_NAME = "data-mgfa-app-icon-surfaces";
 
-test("escapeCssUrl escapes quotes and slashes", () => {
-  assert.equal(escapeCssUrl('foo\\bar"baz'), 'foo\\\\bar\\"baz', "Should escape backslashes and double quotes");
+const settings = require("../src/shared/settings.js");
+const { apps, getAppById, getAssetPath } = require("../src/shared/apps.js");
+
+function buildOptions(enabledAppIds, extraOptions = {}) {
+  const enabledSet = new Set(enabledAppIds);
+
+  return {
+    enabled: extraOptions.enabled !== false,
+    dayNumber: extraOptions.dayNumber,
+    apps: Object.fromEntries(apps.map((app) => [app.id, enabledSet.has(app.id)]))
+  };
+}
+
+function createDomEnvironment({ readyState = "complete", visibilityState = "visible" } = {}) {
+  const documentListeners = new Map();
+  const windowListeners = new Map();
+  const headChildren = [];
+  const rootChildren = [];
+  const clearedTimeouts = [];
+  let nextTimerId = 0;
+
+  function removeChild(children, node) {
+    const index = children.indexOf(node);
+    if (index >= 0) {
+      children.splice(index, 1);
+    }
+    node.parentNode = null;
+  }
+
+  function createNode(tagName) {
+    return {
+      tagName,
+      id: "",
+      textContent: "",
+      parentNode: null,
+      remove() {
+        if (this.parentNode === document.head) {
+          removeChild(headChildren, this);
+        } else if (this.parentNode === document.documentElement) {
+          removeChild(rootChildren, this);
+        }
+      }
+    };
+  }
+
+  function appendChild(children, parent, node) {
+    children.push(node);
+    node.parentNode = parent;
+    return node;
+  }
+
+  const documentElement = {
+    attributes: new Map(),
+    appendChild(node) {
+      return appendChild(rootChildren, this, node);
+    },
+    setAttribute(name, value) {
+      this.attributes.set(name, String(value));
+    },
+    getAttribute(name) {
+      return this.attributes.has(name) ? this.attributes.get(name) : null;
+    },
+    removeAttribute(name) {
+      this.attributes.delete(name);
+    }
+  };
+
+  const document = {
+    readyState,
+    visibilityState,
+    head: {
+      children: headChildren,
+      appendChild(node) {
+        return appendChild(headChildren, this, node);
+      }
+    },
+    documentElement,
+    createElement(tagName) {
+      return createNode(tagName);
+    },
+    getElementById(id) {
+      return [...headChildren, ...rootChildren].find((node) => node.id === id) || null;
+    },
+    addEventListener(type, listener) {
+      const listeners = documentListeners.get(type) || [];
+      listeners.push(listener);
+      documentListeners.set(type, listeners);
+    }
+  };
+
+  const scheduledTimers = new Map();
+  const window = {
+    addEventListener(type, listener) {
+      const listeners = windowListeners.get(type) || [];
+      listeners.push(listener);
+      windowListeners.set(type, listeners);
+    },
+    setTimeout(callback, delay) {
+      const id = `timer-${++nextTimerId}`;
+      scheduledTimers.set(id, { callback, delay });
+      return id;
+    }
+  };
+
+  return {
+    document,
+    window,
+    clearTimeout(timerId) {
+      clearedTimeouts.push(timerId);
+      scheduledTimers.delete(timerId);
+    },
+    dispatchDocument(type) {
+      for (const listener of documentListeners.get(type) || []) {
+        listener({ type });
+      }
+    },
+    dispatchWindow(type) {
+      for (const listener of windowListeners.get(type) || []) {
+        listener({ type });
+      }
+    },
+    setVisibilityState(nextVisibilityState) {
+      document.visibilityState = nextVisibilityState;
+    },
+    getClearedTimeouts() {
+      return [...clearedTimeouts];
+    },
+    getScheduledTimeoutIds() {
+      return [...scheduledTimers.keys()];
+    }
+  };
+}
+
+function expectedRuntimeAsset(appId, surfaceName, options) {
+  const app = getAppById(appId);
+  const assetPath = app.surfaces[surfaceName]?.assetPath || getAssetPath(app, options);
+  return `runtime://${assetPath}`;
+}
+
+function withSurfaceModule(environment, runAssertions) {
+  const previousDocument = globalThis.document;
+  const previousWindow = globalThis.window;
+  const previousClearTimeout = globalThis.clearTimeout;
+  const previousRuntime = globalThis.__MGFA_RUNTIME__;
+  const previousMgfa = globalThis.MakeGoogleFlatAgain;
+  let registeredSurface = null;
+
+  globalThis.document = environment.document;
+  globalThis.window = environment.window;
+  globalThis.clearTimeout = environment.clearTimeout;
+  globalThis.__MGFA_RUNTIME__ = {
+    attach() {
+      return true;
+    },
+    getRuntimeUrl(assetPath) {
+      return `runtime://${assetPath}`;
+    }
+  };
+  globalThis.MakeGoogleFlatAgain = {
+    apps: require("../src/shared/apps.js"),
+    settings,
+    debugLogger: {
+      create() {
+        return {
+          event() {
+            return true;
+          },
+          snapshot() {
+            return true;
+          }
+        };
+      }
+    },
+    surfaceRegistry: {
+      register(surface) {
+        registeredSurface = surface;
+      }
+    }
+  };
+
+  delete require.cache[require.resolve(MODULE_PATH)];
+
+  try {
+    const surface = require(MODULE_PATH);
+    assert.equal(surface, registeredSurface, "Surface should register the exported API instance");
+    runAssertions(surface);
+  } finally {
+    delete require.cache[require.resolve(MODULE_PATH)];
+    globalThis.document = previousDocument;
+    globalThis.window = previousWindow;
+    globalThis.clearTimeout = previousClearTimeout;
+    globalThis.__MGFA_RUNTIME__ = previousRuntime;
+    globalThis.MakeGoogleFlatAgain = previousMgfa;
+  }
+}
+
+test("start applies one managed style for enabled icon surfaces and marks the root", () => {
+  const environment = createDomEnvironment();
+  const options = buildOptions(["calendar", "tasks"], { dayNumber: 9 });
+
+  withSurfaceModule(environment, (surface) => {
+    surface.start({ options });
+
+    const styleElement = environment.document.getElementById(STYLE_ID);
+    assert.ok(styleElement, "Should insert the managed style element");
+    assert.equal(environment.document.head.children.length, 1, "Should manage a single shared style element");
+    assert.equal(environment.document.documentElement.getAttribute(ATTR_NAME), "1", "Should mark the root while active");
+
+    assert.match(styleElement.textContent, new RegExp(getAppById("calendar").surfaces.sidePanel.selectors[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(styleElement.textContent, new RegExp(getAppById("tasks").surfaces.sidePanelLoading.selectors[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.ok(
+      styleElement.textContent.includes(expectedRuntimeAsset("calendar", "productLogo", options)),
+      "Should use the day-aware Calendar asset in the managed CSS"
+    );
+    assert.ok(
+      !styleElement.textContent.includes(getAppById("keep").surfaces.sidePanel.selectors[0]),
+      "Should exclude disabled surface apps from the shared stylesheet"
+    );
+  });
 });
 
-test("buildSidePanelCss includes enabled side panel apps only", () => {
-  const css = buildSidePanelCss({
-    enabled: true,
-    apps: {
-      calendar: true,
-      keep: true,
-      tasks: true,
-      maps: true
-    }
-  });
+test("refresh reuses the managed style element and cleanup removes it when nothing stays enabled", () => {
+  const environment = createDomEnvironment();
+  const options = buildOptions(["keep"]);
 
-  assert.ok(css.includes('data-guest-app-id="6"'), "Should include Calendar side panel surface");
-  assert.ok(css.includes('data-guest-app-id="4"'), "Should include Tasks side panel surface");
-  assert.ok(css.includes('data-guest-app-id="8"'), "Should include Maps side panel surface");
-  assert.ok(css.includes('data-guest-app-id="2"'), "Should include Keep side panel surface");
-  assert.ok(css.includes("keep-classic-square.svg"), "Should use square SVG asset for Keep side panel");
-  assert.ok(css.includes('data-guest-app-id="2"] .app-switcher-button-icon-container'), "Should include Keep icon container selector");
-  assert.ok(css.includes('[style*="tasks_2026_2x"]'), "Should include Tasks 2026 selector pattern");
+  withSurfaceModule(environment, (surface) => {
+    surface.start({ options });
+
+    const originalStyle = environment.document.getElementById(STYLE_ID);
+    const firstTimerId = environment.getScheduledTimeoutIds()[0];
+
+    options.apps.keep = false;
+    options.apps.tasks = true;
+    surface.refresh();
+
+    const refreshedStyle = environment.document.getElementById(STYLE_ID);
+    assert.equal(refreshedStyle, originalStyle, "Should reuse the existing managed style element on refresh");
+    assert.ok(refreshedStyle.textContent.includes(getAppById("tasks").surfaces.sidePanel.selectors[0]));
+    assert.ok(!refreshedStyle.textContent.includes(getAppById("keep").surfaces.sidePanel.selectors[0]));
+
+    options.enabled = false;
+    surface.refresh();
+
+    assert.equal(environment.document.getElementById(STYLE_ID), null, "Should remove the managed style when no icon surfaces are enabled");
+    assert.equal(environment.document.documentElement.getAttribute(ATTR_NAME), null, "Should clear the managed root marker after cleanup");
+    assert.deepEqual(
+      environment.getClearedTimeouts(),
+      [firstTimerId, "timer-2"],
+      "Should clear the active midnight timers on refresh and cleanup"
+    );
+  });
 });
 
-test("buildSidePanelCss returns empty string if disabled globally", () => {
-  const css = buildSidePanelCss({
-    enabled: false,
-    apps: {
-      calendar: true,
-      keep: true,
-      tasks: true,
-      maps: true
-    }
-  });
+test("builder APIs keep launcher, docs-menu, loading, and product-logo CSS contracts", () => {
+  const environment = createDomEnvironment();
 
-  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
+  withSurfaceModule(environment, (surface) => {
+    const launcherCss = surface.buildAppLauncherCss(buildOptions(["drive"]));
+    const docsMenuCss = surface.buildDocsHomescreenMenuCss(buildOptions(["docs", "forms"]));
+    const loadingCss = surface.buildSidePanelLoadingCss(buildOptions(["keep"]));
+    const productLogoCss = surface.buildProductLogoCss(buildOptions(["calendar"], { dayNumber: 9 }));
+
+    assert.ok(launcherCss.includes(getAppById("drive").surfaces.appLauncher.selectors[0]));
+    assert.ok(launcherCss.includes(getAppById("drive").surfaces.appLauncher.selectors[1]));
+    assert.ok(launcherCss.includes(expectedRuntimeAsset("drive", "appLauncher", {})));
+
+    assert.ok(docsMenuCss.includes(getAppById("docs").surfaces.docsHomescreenMenu.selectors[0]));
+    assert.ok(docsMenuCss.includes(getAppById("forms").surfaces.docsHomescreenMenu.selectors[0]));
+    assert.ok(!docsMenuCss.includes(getAppById("slides").surfaces.docsHomescreenMenu.selectors[0]));
+    assert.ok(docsMenuCss.includes(`${getAppById("docs").surfaces.docsHomescreenMenu.selectors[0]}::before`));
+    assert.ok(docsMenuCss.includes('content: "" !important;'));
+
+    assert.ok(loadingCss.includes(getAppById("keep").surfaces.sidePanelLoading.selectors[0]));
+    assert.ok(loadingCss.includes(expectedRuntimeAsset("keep", "sidePanelLoading", {})));
+    assert.ok(loadingCss.includes("background-size: 128px 128px !important;"));
+
+    assert.ok(productLogoCss.includes(getAppById("calendar").surfaces.productLogo.selectors[0]));
+    assert.ok(productLogoCss.includes(getAppById("calendar").surfaces.productLogo.selectors[1]));
+    assert.ok(productLogoCss.includes('--mgfa-logo-source: "header-calendar" !important;'));
+    assert.ok(productLogoCss.includes(expectedRuntimeAsset("calendar", "productLogo", { dayNumber: 9 })));
+  });
 });
 
-test("buildSidePanelLoadingCss includes the large Tasks and Keep loading icon selectors", () => {
-  const css = buildSidePanelLoadingCss({
-    enabled: true,
-    apps: {
-      keep: true,
-      tasks: true
-    }
+test("start keeps the surface reactive to focus and visibility-driven reapply", () => {
+  const environment = createDomEnvironment({ readyState: "loading", visibilityState: "hidden" });
+  const options = buildOptions([]);
+
+  withSurfaceModule(environment, (surface) => {
+    surface.start({ options });
+
+    assert.equal(environment.document.getElementById(STYLE_ID), null, "Should not create a style before any surface is enabled");
+
+    options.apps.maps = true;
+    environment.dispatchDocument("DOMContentLoaded");
+
+    const styleAfterReady = environment.document.getElementById(STYLE_ID);
+    assert.ok(styleAfterReady, "Should apply once the page becomes ready");
+    assert.ok(styleAfterReady.textContent.includes(getAppById("maps").surfaces.sidePanel.selectors[0]));
+
+    options.apps.maps = false;
+    options.apps.tasks = true;
+    environment.dispatchWindow("focus");
+
+    const styleAfterFocus = environment.document.getElementById(STYLE_ID);
+    assert.ok(styleAfterFocus.textContent.includes(getAppById("tasks").surfaces.sidePanel.selectors[0]));
+    assert.ok(!styleAfterFocus.textContent.includes(getAppById("maps").surfaces.sidePanel.selectors[0]));
+
+    options.apps.tasks = false;
+    options.apps.calendar = true;
+    environment.setVisibilityState("visible");
+    environment.dispatchDocument("visibilitychange");
+
+    const styleAfterVisibility = environment.document.getElementById(STYLE_ID);
+    assert.ok(styleAfterVisibility.textContent.includes(getAppById("calendar").surfaces.sidePanel.selectors[0]));
+    assert.ok(!styleAfterVisibility.textContent.includes(getAppById("tasks").surfaces.sidePanel.selectors[0]));
   });
-
-  assert.ok(css.includes('[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_tasks_"]'), "Should target the large Tasks loading icon");
-  assert.ok(css.includes('[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_keep_"]'), "Should target the large Keep loading icon");
-  assert.ok(css.includes('background-size: 128px 128px !important;'), "Should size the loading icon replacement to 128px");
-  assert.ok(css.includes('tasks-classic.svg'), "Should use the Tasks classic asset for the large loading icon");
-  assert.ok(css.includes('keep-classic-square.svg'), "Should use the square Keep asset for the large loading icon");
-});
-
-test("buildSidePanelLoadingCss returns empty string if disabled globally", () => {
-  const css = buildSidePanelLoadingCss({
-    enabled: false,
-    apps: {
-      tasks: true
-    }
-  });
-
-  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
-});
-
-test("buildAppLauncherCss includes launcher-grid selectors for enabled apps only", () => {
-  const css = buildAppLauncherCss({
-    enabled: true,
-    apps: {
-      docs: false,
-      keep: false
-    }
-  });
-
-  assert.ok(css.includes('a.tX9u1b[data-pid="49"] .CgwTDb .MrEfLc'), "Should include Drive launcher selectors");
-  assert.ok(css.includes('a.tX9u1b[data-pid="385"] .CgwTDb .MrEfLc'), "Should include Chat launcher selectors");
-  assert.ok(css.includes('a.tX9u1b[data-pid="682"] .CgwTDb .MrEfLc'), "Should include Vids launcher selectors");
-  assert.ok(css.includes('a.tX9u1b[data-pid="39"] .CgwTDb .MrEfLc'), "Should include Tasks launcher selectors");
-  assert.ok(css.includes("background-size: 40px 40px !important;"), "Should apply standard 40px launcher icon size");
-  assert.ok(!css.includes('a.tX9u1b[data-pid="25"] .CgwTDb .MrEfLc'), "Should omit Docs launcher selectors since Docs is disabled");
-  assert.ok(!css.includes('a.tX9u1b[data-pid="136"] .CgwTDb .MrEfLc'), "Should omit Keep launcher selectors since Keep is disabled");
-});
-
-test("buildAppLauncherCss returns empty string if disabled globally", () => {
-  const css = buildAppLauncherCss({
-    enabled: false,
-    apps: {
-      docs: true,
-      keep: true
-    }
-  });
-
-  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
-});
-
-test("buildDocsHomescreenMenuCss replaces left-menu sprite icons via element backgrounds", () => {
-  const css = buildDocsHomescreenMenuCss({
-    enabled: true,
-    apps: {
-      drive: true,
-      docs: true,
-      sheets: true,
-      slides: false,
-      forms: true,
-      vids: true
-    }
-  });
-
-  assert.ok(css.includes('.docs-homescreen-leftmenu .docs-homescreen-img.docs-homescreen-docs-2026-24'), "Should replace Docs sprite icon");
-  assert.ok(css.includes('.docs-homescreen-leftmenu .docs-homescreen-img.docs-homescreen-drive-2026-24'), "Should replace Drive sprite icon");
-  assert.ok(css.includes('.docs-homescreen-leftmenu .docs-homescreen-img.docs-homescreen-forms-2026-24'), "Should replace Forms sprite icon");
-  assert.ok(!css.includes('.docs-homescreen-leftmenu .docs-homescreen-img.docs-homescreen-slides-2026-24'), "Should omit Slides menu icon since Slides is disabled");
-  assert.ok(css.includes('::before'), "Should insert content via ::before psuedo-elements");
-  assert.ok(css.includes('content: "" !important;'), "Should clear default icon sprite content");
-  assert.ok(css.includes('background-size: 24px 24px !important;'), "Should size replacement backgrounds to 24px");
-  assert.ok(css.includes('left: 0 !important;'), "Should position replacement icons at left 0");
-  assert.ok(css.includes('top: 0 !important;'), "Should position replacement icons at top 0");
-});
-
-test("buildDocsHomescreenMenuCss returns empty string if disabled globally", () => {
-  const css = buildDocsHomescreenMenuCss({
-    enabled: false,
-    apps: {
-      drive: true,
-      docs: true
-    }
-  });
-
-  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
-});
-
-test("buildProductLogoCss uses the day-aware Calendar asset path", () => {
-  const css = buildProductLogoCss({
-    enabled: true,
-    dayNumber: 9,
-    apps: {
-      calendar: true
-    }
-  });
-
-  assert.ok(css.includes('img[src*="/images/branding/productlogos/calendar_2026_"]'), "Should target Calendar productlogo images by src");
-  assert.ok(css.includes('img[srcset*="/images/branding/productlogos/calendar_2026_"]'), "Should target Calendar productlogo images by srcset");
-  assert.ok(css.includes('calendar-09.webp'), "Should use the day-aware Calendar asset for the supplied day number");
-  assert.ok(css.includes('--mgfa-logo-source: "header-calendar" !important;'), "Should keep the debug source marker for Calendar header replacements");
-  assert.ok(css.includes('content: url("assets/icons/calendar/calendar-09.webp") !important;'), "Should replace the product logo via content:url");
-});
-
-test("buildProductLogoCss returns empty string if disabled globally", () => {
-  const css = buildProductLogoCss({
-    enabled: false,
-    dayNumber: 9,
-    apps: {
-      calendar: true
-    }
-  });
-
-  assert.equal(css.trim(), "", "Should return empty CSS if not enabled globally");
 });

@@ -29,6 +29,16 @@ function createDesiredScript(id = "mgfa-header-docs") {
   };
 }
 
+function createExpectedRegistration(id = "mgfa-header-docs") {
+  return {
+    id,
+    matches: ["https://docs.google.com/document/*"],
+    css: ["src/content/styles/header-docs.css"],
+    runAt: "document_start",
+    persistAcrossSessions: true
+  };
+}
+
 test("firefox adapter maps desired scripts to browser.scripting.registerContentScripts", async () => {
   const registerCalls = [];
   const registry = loadFirefoxRegistry();
@@ -62,19 +72,15 @@ test("firefox adapter maps desired scripts to browser.scripting.registerContentS
 
   assert.deepEqual(registerCalls, [
     [
-      {
-        id: "mgfa-header-docs",
-        matches: ["https://docs.google.com/document/*"],
-        css: ["src/content/styles/header-docs.css"],
-        runAt: "document_start",
-        persistAcrossSessions: true
-      }
+      createExpectedRegistration()
     ]
   ]);
   assert.deepEqual(result.addedIds, ["mgfa-header-docs"]);
 });
 
 test("firefox adapter unregisters stale managed ids", async () => {
+  const getRegisteredCalls = [];
+  const registerCalls = [];
   const unregisterCalls = [];
   const registry = loadFirefoxRegistry();
   const fakeApi = {
@@ -82,13 +88,15 @@ test("firefox adapter unregisters stale managed ids", async () => {
       lastError: null
     },
     scripting: {
-      getRegisteredContentScripts() {
+      getRegisteredContentScripts(filter) {
+        getRegisteredCalls.push(filter);
         return Promise.resolve([
           { id: "mgfa-header-docs" },
           { id: "mgfa-header-sheets" }
         ]);
       },
-      registerContentScripts() {
+      registerContentScripts(payload) {
+        registerCalls.push(payload);
         return Promise.resolve();
       },
       unregisterContentScripts(payload) {
@@ -113,7 +121,9 @@ test("firefox adapter unregisters stale managed ids", async () => {
     fakeApi
   );
 
+  assert.deepEqual(getRegisteredCalls, [{ ids: ["mgfa-header-docs", "mgfa-header-sheets"] }]);
   assert.deepEqual(unregisterCalls, [{ ids: ["mgfa-header-docs"] }]);
+  assert.deepEqual(registerCalls, []);
 });
 
 test("firefox adapter skips when scripting registration API is unavailable", async () => {
@@ -164,7 +174,11 @@ test("firefox adapter falls back to clear-and-register when registered script li
   assert.deepEqual(result.removedIds, ["mgfa-header-docs", "mgfa-header-sheets"]);
   assert.deepEqual(result.addedIds, ["mgfa-header-sheets"]);
   assert.deepEqual(unregisterCalls, [{ ids: ["mgfa-header-docs", "mgfa-header-sheets"] }]);
-  assert.equal(registerCalls.length, 1);
+  assert.deepEqual(registerCalls, [
+    [
+      createExpectedRegistration("mgfa-header-sheets")
+    ]
+  ]);
 });
 
 test("firefox adapter unregisters stale ids when desired set is empty", async () => {
@@ -233,6 +247,71 @@ test("firefox adapter rejects callback path when runtime.lastError is set", asyn
       fakeApi
     ),
     /Registration denied/
+  );
+});
+
+test("firefox adapter exposes getRegisteredContentScripts promise rejection message", async () => {
+  const registry = loadFirefoxRegistry();
+  const fakeApi = {
+    runtime: {
+      lastError: null
+    },
+    scripting: {
+      getRegisteredContentScripts() {
+        return Promise.reject(new Error("Cannot enumerate registered scripts"));
+      },
+      registerContentScripts() {
+        throw new Error("registerContentScripts should not run after listing fails.");
+      },
+      unregisterContentScripts() {
+        throw new Error("unregisterContentScripts should not run after listing fails.");
+      }
+    }
+  };
+
+  await assert.rejects(
+    registry.syncManagedCssScripts(
+      {
+        managedIds: ["mgfa-header-docs"],
+        desiredScripts: [createDesiredScript()]
+      },
+      fakeApi
+    ),
+    { message: "Cannot enumerate registered scripts" }
+  );
+});
+
+test("firefox adapter exposes unregisterContentScripts promise rejection message", async () => {
+  const registry = loadFirefoxRegistry();
+  const fakeApi = {
+    runtime: {
+      lastError: null
+    },
+    scripting: {
+      getRegisteredContentScripts() {
+        return Promise.resolve([
+          { id: "mgfa-header-docs" },
+          { id: "mgfa-header-sheets" }
+        ]);
+      },
+      registerContentScripts() {
+        throw new Error("registerContentScripts should not run when stale unregister fails.");
+      },
+      unregisterContentScripts() {
+        return Promise.reject(new Error("Cannot unregister stale scripts"));
+      }
+    }
+  };
+
+  await assert.rejects(
+    registry.syncManagedCssScripts(
+      {
+        managedIds: ["mgfa-header-docs", "mgfa-header-sheets"],
+        desiredScripts: [createDesiredScript("mgfa-header-sheets")]
+      },
+      fakeApi
+    ),
+    { message: "Cannot unregister stale scripts" }
   );
 });
 
