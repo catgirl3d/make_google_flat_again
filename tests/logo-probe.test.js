@@ -42,6 +42,40 @@ function createElement({ src = "", srcset = "", replacementSource = "" } = {}) {
   };
 }
 
+function createView(hostname, pathname = "/", computedStyleCalls = []) {
+  return {
+    location: {
+      hostname,
+      pathname
+    },
+    getComputedStyle(target) {
+      computedStyleCalls.push(target);
+      return {
+        getPropertyValue(name) {
+          assert.equal(name, "--mgfa-logo-source");
+          return target._replacementSource;
+        }
+      };
+    }
+  };
+}
+
+function createProbeDocument(matchesBySelector) {
+  const queriedSelectors = [];
+
+  return {
+    queriedSelectors,
+    querySelectorAll(selector) {
+      queriedSelectors.push(selector);
+      return matchesBySelector.get(selector) || [];
+    }
+  };
+}
+
+function definitionByKey(key) {
+  return logoProbe.PROBE_DEFINITIONS.find((definition) => definition.key === key);
+}
+
 let logoProbe = null;
 
 test.beforeEach(() => {
@@ -64,49 +98,136 @@ test("getReplacementSource reads the CSS marker from computed styles", () => {
   assert.equal(logoProbe.getReplacementSource(element, viewLike), "header-tasks");
 });
 
-test("collect reports Tasks logo candidates and replacement matches", () => {
+test("collect ignores hosts without logo probe definitions", () => {
+  let queried = false;
+
+  assert.equal(logoProbe.collect(createView("drive.google.com"), {
+    querySelectorAll() {
+      queried = true;
+      return [];
+    }
+  }), null);
+  assert.equal(queried, false);
+});
+
+test("collect reports no-match snapshots for active Gmail probe definitions", () => {
+  const documentLike = createProbeDocument(new Map());
+
+  assert.deepEqual(logoProbe.collect(createView("mail.google.com", "/mail/u/0/"), documentLike), {
+    hostname: "mail.google.com",
+    pathname: "/mail/u/0/",
+    gmailHeaderLockup: {
+      count: 0,
+      replacementMatched: false,
+      replacementSources: [],
+      sampleSources: []
+    },
+    gmailLoadingLogo: {
+      count: 0,
+      replacementMatched: false,
+      replacementSources: [],
+      sampleSources: []
+    }
+  });
+  assert.deepEqual(documentLike.queriedSelectors, [
+    ...definitionByKey("gmailHeaderLockup").selectors,
+    ...definitionByKey("gmailLoadingLogo").selectors
+  ]);
+});
+
+test("collect reports both Gmail probe branches on the same host", () => {
+  const headerElement = createElement({
+    src: "https://www.gstatic.com/icons/mail/rfr/logo_gmail_lockup_default_1x_r7.png",
+    replacementSource: "'header-gmail-lockup'"
+  });
+  const loadingElement = createElement({
+    srcset: "https://ssl.gstatic.com/ui/v1/icons/mail/logo_loading_2x.png 2x",
+    replacementSource: '"header-gmail-loading"'
+  });
+  const matchesBySelector = new Map([
+    [definitionByKey("gmailHeaderLockup").selectors[2], [headerElement]],
+    [definitionByKey("gmailLoadingLogo").selectors[1], [loadingElement]]
+  ]);
+  const documentLike = createProbeDocument(matchesBySelector);
+
+  assert.deepEqual(logoProbe.collect(createView("mail.google.com", "/mail/u/0/"), documentLike), {
+    hostname: "mail.google.com",
+    pathname: "/mail/u/0/",
+    gmailHeaderLockup: {
+      count: 1,
+      replacementMatched: true,
+      replacementSources: ["header-gmail-lockup"],
+      sampleSources: [
+        {
+          src: "https://www.gstatic.com/icons/mail/rfr/logo_gmail_lockup_default_1x_r7.png",
+          srcset: ""
+        }
+      ]
+    },
+    gmailLoadingLogo: {
+      count: 1,
+      replacementMatched: true,
+      replacementSources: ["header-gmail-loading"],
+      sampleSources: [
+        {
+          src: "",
+          srcset: "https://ssl.gstatic.com/ui/v1/icons/mail/logo_loading_2x.png 2x"
+        }
+      ]
+    }
+  });
+  assert.deepEqual(documentLike.queriedSelectors, [
+    ...definitionByKey("gmailHeaderLockup").selectors,
+    ...definitionByKey("gmailLoadingLogo").selectors
+  ]);
+});
+
+test("collect reports Tasks logo candidates and normalized replacement markers", () => {
   const element = createElement({
     src: "https://www.gstatic.com/images/branding/productlogos/tasks_2026/v2/web/192px.svg",
     replacementSource: '"header-tasks"'
   });
-  const documentLike = {
-    querySelectorAll(selector) {
-      return selector.includes("tasks_2026") ? [element] : [];
-    }
-  };
-  const viewLike = {
-    location: {
-      hostname: "tasks.google.com",
-      pathname: "/tasks/"
-    },
-    getComputedStyle(target) {
-      return {
-        getPropertyValue() {
-          return target._replacementSource;
-        }
-      };
-    }
-  };
+  const duplicateSelectorElement = createElement({
+    srcset: "https://www.gstatic.com/images/branding/productlogos/tasks_2026/v2/web/192px.svg 1x",
+    replacementSource: "'header-tasks'"
+  });
+  const tasksDefinition = definitionByKey("tasksProductlogo");
+  const documentLike = createProbeDocument(new Map([
+    [tasksDefinition.selectors[0], [element, duplicateSelectorElement]],
+    [tasksDefinition.selectors[1], [duplicateSelectorElement]]
+  ]));
 
-  assert.deepEqual(logoProbe.collect(viewLike, documentLike), {
+  assert.deepEqual(logoProbe.collect(createView("tasks.google.com", "/tasks/"), documentLike), {
     hostname: "tasks.google.com",
     pathname: "/tasks/",
     tasksProductlogo: {
-      count: 1,
+      count: 2,
       replacementMatched: true,
       replacementSources: ["header-tasks"],
       sampleSources: [
         {
           src: "https://www.gstatic.com/images/branding/productlogos/tasks_2026/v2/web/192px.svg",
           srcset: ""
+        },
+        {
+          src: "",
+          srcset: "https://www.gstatic.com/images/branding/productlogos/tasks_2026/v2/web/192px.svg 1x"
         }
       ]
     }
   });
+  assert.deepEqual(documentLike.queriedSelectors, [...tasksDefinition.selectors]);
 });
 
 test("production build flags disable logo probe collection", () => {
   const prodLogoProbe = loadLogoProbe({ isDevelopment: false });
+  let queried = false;
 
-  assert.equal(prodLogoProbe.collect({ location: { hostname: "tasks.google.com" } }, { querySelectorAll() { return []; } }), null);
+  assert.equal(prodLogoProbe.collect(createView("tasks.google.com"), {
+    querySelectorAll() {
+      queried = true;
+      return [];
+    }
+  }), null);
+  assert.equal(queried, false);
 });
