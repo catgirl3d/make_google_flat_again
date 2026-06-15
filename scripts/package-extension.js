@@ -12,6 +12,13 @@ const FIXED_ZIP_DATE = new Date(1980, 0, 1, 0, 0, 0);
 const STABLE_FILE_MODE = 0o100644;
 const BUILD_MODES = new Set(["dev", "prod"]);
 const BUILD_FLAGS_PATH = path.join("src", "shared", "build-flags.js");
+const HEADER_STYLES_DIR = path.join("src", "content", "styles");
+const HEADER_STYLE_FILE_PATTERN = /^header-.*\.css$/;
+const HEADER_ASSET_URL_PATTERN = /url\("(\.\.\/\.\.\/\.\.\/assets\/icons\/apps\/[^\"]+)"\)/g;
+const MIME_TYPES_BY_EXTENSION = Object.freeze({
+  ".png": "image/png",
+  ".svg": "image/svg+xml"
+});
 
 function compareStrings(left, right) {
   if (left < right) {
@@ -167,6 +174,49 @@ function writeBuildFlags(stageDir, mode) {
   fs.writeFileSync(buildFlagsPath, nextSource, "utf8");
 }
 
+function getAssetMimeType(assetPath) {
+  const mimeType = MIME_TYPES_BY_EXTENSION[path.extname(assetPath).toLowerCase()];
+
+  if (!mimeType) {
+    throw new Error(`Unsupported managed header asset type: ${assetPath}`);
+  }
+
+  return mimeType;
+}
+
+function buildAssetDataUrl(assetPath) {
+  const mimeType = getAssetMimeType(assetPath);
+  const assetBuffer = fs.readFileSync(assetPath);
+  return `data:${mimeType};base64,${assetBuffer.toString("base64")}`;
+}
+
+function inlineManagedHeaderAssetUrls(cssSource, cssFilePath) {
+  return cssSource.replace(HEADER_ASSET_URL_PATTERN, (_match, relativeAssetPath) => {
+    const assetPath = path.resolve(path.dirname(cssFilePath), relativeAssetPath);
+    assertRequiredPath(assetPath);
+    return `url("${buildAssetDataUrl(assetPath)}")`;
+  });
+}
+
+function rewriteChromeManagedHeaderCss(stageDir) {
+  // Chrome runtime-registered CSS does not preserve a stable base URL for these relative app assets,
+  // so the staged Chrome artifact inlines them while source and Firefox keep the readable SSOT paths.
+  const stylesDir = path.join(stageDir, HEADER_STYLES_DIR);
+  const styleFileNames = fs.readdirSync(stylesDir)
+    .filter((fileName) => HEADER_STYLE_FILE_PATTERN.test(fileName))
+    .sort(compareStrings);
+
+  for (const fileName of styleFileNames) {
+    const cssFilePath = path.join(stylesDir, fileName);
+    const currentSource = fs.readFileSync(cssFilePath, "utf8");
+    const nextSource = inlineManagedHeaderAssetUrls(currentSource, cssFilePath);
+
+    if (nextSource !== currentSource) {
+      fs.writeFileSync(cssFilePath, nextSource, "utf8");
+    }
+  }
+}
+
 function pruneTargetFiles(target, stageDir) {
   if (target === "firefox") {
     fs.rmSync(path.join(stageDir, "src", "platform", "chrome"), { recursive: true, force: true });
@@ -273,6 +323,10 @@ function stageExtension({ target, mode = "dev", distDir } = {}) {
   writeBuildFlags(stageDir, mode);
   pruneTargetFiles(target, stageDir);
 
+  if (target === "chrome") {
+    rewriteChromeManagedHeaderCss(stageDir);
+  }
+
   return {
     manifest,
     mode,
@@ -328,6 +382,7 @@ module.exports = {
   packageExtension,
   parseArgs,
   pruneTargetFiles,
+  rewriteChromeManagedHeaderCss,
   stageExtension,
   writeBuildFlags,
   writeDeterministicZip

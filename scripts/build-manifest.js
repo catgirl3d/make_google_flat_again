@@ -4,6 +4,11 @@ const path = require("node:path");
 const PROJECT_ROOT = path.join(__dirname, "..");
 const MANIFESTS_DIR = path.join(PROJECT_ROOT, "manifests");
 const SUPPORTED_TARGETS = new Set(["firefox", "chrome"]);
+const CHROME_BROAD_GOOGLE_MATCH = "https://www.google.com/*";
+const CHROME_NARROW_GOOGLE_WAR_MATCHES = new Set([
+  "https://www.google.com/maps*",
+  "https://www.google.com/maps/*"
+]);
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -52,9 +57,54 @@ function loadManifestFragment(targetName) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
+function normalizeChromeWebAccessibleResources(manifest) {
+  if (!Array.isArray(manifest?.web_accessible_resources)) {
+    return manifest;
+  }
+
+  manifest.web_accessible_resources = manifest.web_accessible_resources.map((entry) => {
+    if (!Array.isArray(entry?.matches)) {
+      return entry;
+    }
+
+    const normalizedMatches = [];
+    let broadenGoogleOrigin = false;
+
+    for (const matchPattern of entry.matches) {
+      if (CHROME_NARROW_GOOGLE_WAR_MATCHES.has(matchPattern)) {
+        broadenGoogleOrigin = true;
+        continue;
+      }
+
+      if (!normalizedMatches.includes(matchPattern)) {
+        normalizedMatches.push(matchPattern);
+      }
+    }
+
+    if (broadenGoogleOrigin && !normalizedMatches.includes(CHROME_BROAD_GOOGLE_MATCH)) {
+      normalizedMatches.push(CHROME_BROAD_GOOGLE_MATCH);
+    }
+
+    return {
+      ...entry,
+      matches: normalizedMatches
+    };
+  });
+
+  return manifest;
+}
+
+function normalizeManifestForTarget(target, manifest) {
+  if (target === "chrome") {
+    return normalizeChromeWebAccessibleResources(manifest);
+  }
+
+  return manifest;
+}
+
 function buildManifest(target) {
   assertTarget(target);
-  return deepMerge(loadManifestFragment("base"), loadManifestFragment(target));
+  return normalizeManifestForTarget(target, deepMerge(loadManifestFragment("base"), loadManifestFragment(target)));
 }
 
 function writeManifest(target, outputDir) {
@@ -101,5 +151,7 @@ module.exports = {
   cloneValue,
   deepMerge,
   loadManifestFragment,
+  normalizeChromeWebAccessibleResources,
+  normalizeManifestForTarget,
   writeManifest
 };
