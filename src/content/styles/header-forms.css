@@ -22,6 +22,22 @@
   mask-image: none !important;
 }
 
+span[jsslot].XuQwKc > span.GmuOkf > .cYkUI {
+  position: relative !important;
+}
+
+span[jsslot].XuQwKc > span.GmuOkf > .cYkUI > svg {
+  opacity: 0 !important;
+}
+
+span[jsslot].XuQwKc > span.GmuOkf > .cYkUI::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: url("../../../assets/icons/apps/forms-classic.png") center / contain no-repeat !important;
+  pointer-events: none !important;
+}
+
 a[href*="docs.google.com/forms/"] > img[src*="productlogos/forms_2026"],
 a[href*="docs.google.com/forms/"] > img[srcset*="productlogos/forms_2026"] {
   content: url("../../../assets/icons/apps/forms-classic.png") !important;

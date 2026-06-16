@@ -164,6 +164,19 @@ test("header-drive.css targets Drive productlogo images directly", () => {
   assert.equal(css.includes('content: url("../../../assets/icons/apps/drive-classic.svg") !important;'), true);
 });
 
+test("header-forms.css targets the Forms inline svg logo", () => {
+  const css = readHeaderCss("header-forms.css");
+
+  assert.equal(css.includes('span[jsslot].XuQwKc > span.GmuOkf > .cYkUI {'), true);
+  assert.equal(css.includes('span[jsslot].XuQwKc > span.GmuOkf > .cYkUI > svg {'), true);
+  assert.equal(css.includes('span[jsslot].XuQwKc > span.GmuOkf > .cYkUI::after {'), true);
+  assert.equal(css.includes('position: relative !important;'), true);
+  assert.equal(css.includes('opacity: 0 !important;'), true);
+  assert.equal(css.includes('content: "" !important;'), true);
+  assert.equal(css.includes('pointer-events: none !important;'), true);
+  assert.equal(css.includes('background: url("../../../assets/icons/apps/forms-classic.png") center / contain no-repeat !important;'), true);
+});
+
 for (const { fileName, iconClass, productPath, productLogo, asset } of DOCS_SUITE_CONTRACTS) {
   test(`${fileName} replaces the docs-suite branding icon and productlogo image`, () => {
     const css = readHeaderCss(fileName);
