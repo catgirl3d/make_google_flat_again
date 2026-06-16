@@ -81,6 +81,8 @@ test("calendar asset path stays day-aware and per-surface overrides stay isolate
   assert.equal(getAppById("slides").surfaces.favicon.assetPath, "assets/icons/apps/favicons/slides.ico");
   assert.equal(getAssetPath("forms"), "assets/icons/apps/forms-classic.png");
   assert.equal(getAppById("forms").surfaces.favicon.assetPath, "assets/icons/apps/favicons/forms.ico");
+  assert.equal(getAssetPath("vids"), "assets/icons/apps/vids-classic.svg");
+  assert.equal(getAppById("vids").surfaces.favicon.assetPath, "assets/icons/apps/favicons/vids.ico");
   assert.equal(getAssetPath("keep"), "assets/icons/apps/keep-classic.svg");
   assert.equal(getAppById("keep").surfaces.favicon.assetPath, "assets/icons/apps/keep_icon_1.svg");
   assert.equal(getAppById("keep").surfaces.sidePanel.assetPath, "assets/icons/apps/keep-classic-square.svg");

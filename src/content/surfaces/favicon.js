@@ -209,6 +209,7 @@
         primary.rel = "icon";
         primary.href = href;
         primary.type = type;
+        primary.dataset.mgfaFaviconApp = app.id;
         primary.setAttribute("sizes", "any");
 
         let shortcut = document.querySelector(`${MANAGED_ICON_SELECTOR}[data-mgfa-favicon-role="shortcut"]`);
@@ -220,6 +221,7 @@
         shortcut.rel = "shortcut icon";
         shortcut.href = href;
         shortcut.type = type;
+        shortcut.dataset.mgfaFaviconApp = app.id;
 
         document.head.appendChild(primary);
         document.head.appendChild(shortcut);

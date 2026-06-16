@@ -145,8 +145,27 @@ test("header-keep.css targets Keep productlogo images directly", () => {
   assert.equal(css.includes('margin-right: 3px !important;'), true);
 });
 
-test("header-vids.css targets Vids productlogo images directly", () => {
+test("header-vids.css targets the Vids branding icon and productlogo images directly", () => {
   const css = readHeaderCss("header-vids.css");
+  const brandingIconSelector = '#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-vids-2026"]';
+
+  assert.equal(css.includes("#docs-branding-logo .docs-branding-icon {"), true);
+  assert.equal(css.includes("position: relative !important;"), true);
+  assert.equal(css.includes(`${brandingIconSelector} {`), true);
+  assert.equal(css.includes('background: url("../../../assets/icons/apps/vids-classic.svg") center / contain no-repeat !important;'), true);
+  assert.equal(css.includes("position: absolute !important;"), true);
+  assert.equal(css.includes("inset: 0 !important;"), true);
+  assert.equal(css.includes("opacity: 1 !important;"), true);
+  assert.equal(css.includes("visibility: visible !important;"), true);
+  assert.equal(css.includes("filter: none !important;"), true);
+  assert.equal(css.includes("transform: none !important;"), true);
+
+  assert.equal(css.includes(`${brandingIconSelector}::before,`), true);
+  assert.equal(css.includes(`${brandingIconSelector}::after {`), true);
+  assert.equal(css.includes("content: none !important;"), true);
+  assert.equal(css.includes("background-image: none !important;"), true);
+  assert.equal(css.includes("-webkit-mask-image: none !important;"), true);
+  assert.equal(css.includes("mask-image: none !important;"), true);
 
   assert.equal(css.includes('img[src*="/images/branding/productlogos/vids_2026/"]'), true);
   assert.equal(css.includes('img[srcset*="/images/branding/productlogos/vids_2026/"]'), true);

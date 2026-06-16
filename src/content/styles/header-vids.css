@@ -1,3 +1,27 @@
+#docs-branding-logo .docs-branding-icon {
+  position: relative !important;
+}
+
+#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-vids-2026"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: url("../../../assets/icons/apps/vids-classic.svg") center / contain no-repeat !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-vids-2026"]::before,
+#docs-branding-logo .docs-branding-icon-img[class*="docs-icon-vids-2026"]::after {
+  content: none !important;
+  background-image: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
 img[src*="/images/branding/productlogos/vids_2026/"],
 img[srcset*="/images/branding/productlogos/vids_2026/"] {
   --mgfa-logo-source: "header-vids";

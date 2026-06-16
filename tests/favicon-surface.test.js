@@ -476,7 +476,7 @@ test("start hard-locks Calendar favicons and cleanup restores captured originals
   });
 });
 
-test("refresh cleanup removes managed links when the route no longer resolves to a favicon app", () => {
+test("refresh switches Docs favicon management to Vids on Google Vids routes", () => {
   const environment = createDomEnvironment({
     location: { hostname: "docs.google.com", pathname: "/document/d/example/edit" }
   });
@@ -491,8 +491,15 @@ test("refresh cleanup removes managed links when the route no longer resolves to
     surface.refresh();
     environment.runTimersByDelay(60);
 
-    assert.equal(environment.getManagedLinks().length, 0, "Vids has no favicon surface and should clean up Docs favicons");
-    assert.equal(environment.document.documentElement.getAttribute(ROOT_ATTR), null);
+    assert.equal(environment.getManagedLinks().length, 2, "Vids should keep managed favicons active");
+    assert.equal(environment.document.documentElement.getAttribute(ROOT_ATTR), "vids");
+    assert.deepEqual(
+      environment.getManagedLinks().map((link) => [link.href, link.type, link.dataset.mgfaFaviconApp]),
+      [
+        [expectedRuntimeAsset("vids", options), "image/x-icon", "vids"],
+        [expectedRuntimeAsset("vids", options), "image/x-icon", "vids"]
+      ]
+    );
   });
 });
 
@@ -631,12 +638,14 @@ test("favicon helper contracts back runtime icon detection and asset typing", ()
   assert.equal(relIsIcon("preload stylesheet"), false);
   assert.equal(getFaviconAssetPath(getAppById("docs")), "assets/icons/apps/favicons/docs.ico");
   assert.equal(getFaviconAssetPath(getAppById("forms")), "assets/icons/apps/favicons/forms.ico");
+  assert.equal(getFaviconAssetPath(getAppById("vids")), "assets/icons/apps/favicons/vids.ico");
   assert.equal(getFaviconAssetPath(getAppById("keep")), "assets/icons/apps/keep_icon_1.svg");
   assert.equal(getFaviconAssetPath(getAppById("calendar"), { dayNumber: 7 }), "assets/icons/calendar/calendar-07.webp");
   assert.equal(getFaviconAssetPath(getAppById("sheets")), "assets/icons/apps/favicons/sheets.ico");
   assert.equal(getFaviconAssetPath(getAppById("slides")), "assets/icons/apps/favicons/slides.ico");
   assert.equal(getAppMimeType(getAppById("docs")), "image/x-icon");
   assert.equal(getAppMimeType(getAppById("forms")), "image/x-icon");
+  assert.equal(getAppMimeType(getAppById("vids")), "image/x-icon");
   assert.equal(getAppMimeType(getAppById("sheets")), "image/x-icon");
   assert.equal(getAppMimeType(getAppById("slides")), "image/x-icon");
   assert.equal(getAppMimeType(getAppById("calendar"), { dayNumber: 7 }), "image/webp");

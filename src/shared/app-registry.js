@@ -184,6 +184,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/videos/"] }],
       urlIncludes: ["docs.google.com/videos"],
       surfaces: {
+        favicon: { assetPath: "assets/icons/apps/favicons/vids.ico" },
         appLauncher: createAppLauncherSurface("682", "docs.google.com/videos"),
         docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-vids-2026-24")
       },
