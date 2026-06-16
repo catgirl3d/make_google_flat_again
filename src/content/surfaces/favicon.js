@@ -262,6 +262,16 @@
       }, delay);
     }
 
+    function reapplyAtComplete(reason) {
+      logger.event("complete-reapply", {
+        reason,
+        readyState: document.readyState
+      });
+      ensureHeadAndApply();
+      window.setTimeout(() => schedule(0), 0);
+      window.setTimeout(() => schedule(150), 150);
+    }
+
     refreshSurface = () => schedule(60);
 
     function startObserver() {
@@ -304,6 +314,16 @@
         { once: true }
       );
     }
+
+    document.addEventListener("readystatechange", () => {
+      if (document.readyState === "complete") {
+        reapplyAtComplete("readystatechange");
+      }
+    });
+
+    window.addEventListener("load", () => {
+      reapplyAtComplete("load");
+    }, { once: true });
 
     window.addEventListener("focus", () => schedule(60), { passive: true });
     window.addEventListener("popstate", () => schedule(60), { passive: true });
