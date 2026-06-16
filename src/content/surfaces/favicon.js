@@ -13,6 +13,23 @@
     return /\bicon\b/i.test(String(rel || "")) || /apple-touch-icon|mask-icon/i.test(String(rel || ""));
   }
 
+  function nodeIsIconLink(node) {
+    return node?.tagName === "LINK" && relIsIcon(node.rel);
+  }
+
+  function mutationTouchesIconLink(record) {
+    if (record.type === "attributes") {
+      return record.target?.tagName === "LINK" && (record.attributeName === "rel" || relIsIcon(record.target.rel));
+    }
+
+    if (record.type !== "childList") {
+      return false;
+    }
+
+    return Array.from(record.addedNodes || []).some(nodeIsIconLink)
+      || Array.from(record.removedNodes || []).some(nodeIsIconLink);
+  }
+
   function getFaviconAssetPath(app, options) {
     return app?.surfaces?.favicon?.assetPath || appsApi.getAssetPath(app, options);
   }
@@ -269,10 +286,17 @@
         return;
       }
 
-      observer = new MutationObserver(() => {
-        if (!applying) {
-          schedule(50);
+      observer = new MutationObserver((records) => {
+        if (applying) {
+          return;
         }
+
+        if (records.some(mutationTouchesIconLink)) {
+          ensureHeadAndApply();
+          return;
+        }
+
+        schedule(50);
       });
 
       observer.observe(document.head, {

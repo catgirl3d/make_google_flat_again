@@ -59,7 +59,7 @@ function createDomEnvironment({
     if (index >= 0) {
       headChildren.splice(index, 1);
       node.parentNode = null;
-      notifyMutation({ type: "childList", target: document.head });
+      notifyMutation({ type: "childList", target: document.head, addedNodes: [], removedNodes: [node] });
     }
   }
 
@@ -192,7 +192,7 @@ function createDomEnvironment({
         }
         headChildren.push(node);
         node.parentNode = this;
-        notifyMutation({ type: "childList", target: this });
+        notifyMutation({ type: "childList", target: this, addedNodes: [node], removedNodes: [] });
         return node;
       }
     },
@@ -540,10 +540,21 @@ test("scheduled refresh and MutationObserver reapply managed favicons after rout
     assert.equal(environment.document.documentElement.getAttribute(ROOT_ATTR), "sheets");
 
     environment.runTimersAtOrBelow(0);
-    primary.href = "https://docs.google.com/broken-favicon.ico";
-    assert.equal(primary.href, "https://docs.google.com/broken-favicon.ico");
-    environment.runTimersByDelay(50);
+    environment.createLink({ rel: "shortcut icon", href: "https://ssl.gstatic.com/docs/spreadsheets/spreadsheets-2026-v2.ico", type: "image/x-icon" });
 
+    assert.deepEqual(
+      environment.getLinks().map((link) => [link.rel, link.href]),
+      [
+        ["shortcut icon", "https://ssl.gstatic.com/docs/spreadsheets/spreadsheets-2026-v2.ico"],
+        ["icon", expectedRuntimeAsset("sheets", options)],
+        ["shortcut icon", expectedRuntimeAsset("sheets", options)]
+      ],
+      "MutationObserver should move managed favicon links after newly injected competing tab icons before debounce"
+    );
+    assert.equal(environment.getTimers().some((timer) => timer.delay === 50), false);
+
+    environment.runTimersAtOrBelow(0);
+    primary.href = "https://docs.google.com/broken-favicon.ico";
     assert.equal(primary.href, expectedRuntimeAsset("sheets", options), "MutationObserver should repair externally changed managed hrefs");
   });
 });
