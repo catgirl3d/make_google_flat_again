@@ -70,9 +70,17 @@ test("findPrimaryApp returns maps for the www.google.com maps route and null whe
   assert.equal(findPrimaryApp(noMatchLocation), null);
 });
 
-test("calendar asset path stays day-aware and keep preserves per-surface overrides", () => {
+test("calendar asset path stays day-aware and per-surface overrides stay isolated", () => {
   assert.equal(buildCalendarAssetPath(7), "assets/icons/calendar/calendar-07.webp");
   assert.equal(getAssetPath("calendar", { dayNumber: 31 }), "assets/icons/calendar/calendar-31.webp");
+  assert.equal(getAssetPath("docs"), "assets/icons/apps/docs-classic.svg");
+  assert.equal(getAppById("docs").surfaces.favicon.assetPath, "assets/icons/apps/favicons/docs.ico");
+  assert.equal(getAssetPath("sheets"), "assets/icons/apps/sheets-classic.svg");
+  assert.equal(getAppById("sheets").surfaces.favicon.assetPath, "assets/icons/apps/favicons/sheets.ico");
+  assert.equal(getAssetPath("slides"), "assets/icons/apps/slides-classic.svg");
+  assert.equal(getAppById("slides").surfaces.favicon.assetPath, "assets/icons/apps/favicons/slides.ico");
+  assert.equal(getAssetPath("forms"), "assets/icons/apps/forms-classic.png");
+  assert.equal(getAppById("forms").surfaces.favicon.assetPath, "assets/icons/apps/favicons/forms.ico");
   assert.equal(getAssetPath("keep"), "assets/icons/apps/keep-classic.svg");
   assert.equal(getAppById("keep").surfaces.favicon.assetPath, "assets/icons/apps/keep_icon_1.svg");
   assert.equal(getAppById("keep").surfaces.sidePanel.assetPath, "assets/icons/apps/keep-classic-square.svg");

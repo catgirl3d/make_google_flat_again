@@ -21,12 +21,18 @@
     return runtime.getRuntimeUrl(getFaviconAssetPath(app, options));
   }
 
-  function getAppMimeType(app) {
-    if (app.asset.type === "png") {
+  function getAppMimeType(app, options) {
+    const assetPath = String(getFaviconAssetPath(app, options) || "").toLowerCase();
+
+    if (assetPath.endsWith(".png")) {
       return "image/png";
     }
 
-    if (app.asset.type === "calendar-day") {
+    if (assetPath.endsWith(".ico")) {
+      return "image/x-icon";
+    }
+
+    if (assetPath.endsWith(".webp")) {
       return "image/webp";
     }
 
@@ -172,7 +178,7 @@
       captureOriginalIcons();
 
       const href = getAppIconUrl(app, context.options);
-      const type = getAppMimeType(app);
+      const type = getAppMimeType(app, context.options);
       const hardLock = Boolean(app.surfaces.favicon.hardLock);
 
       logger.snapshot("apply-input", {

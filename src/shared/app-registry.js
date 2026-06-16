@@ -104,7 +104,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/document/"] }],
       urlIncludes: ["docs.google.com/document"],
       surfaces: {
-        favicon: {},
+        favicon: { assetPath: "assets/icons/apps/favicons/docs.ico" },
         appLauncher: createAppLauncherSurface("25", "docs.google.com/document"),
         docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-docs-2026-24")
       },
@@ -124,7 +124,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/spreadsheets/"] }],
       urlIncludes: ["docs.google.com/spreadsheets"],
       surfaces: {
-        favicon: {},
+        favicon: { assetPath: "assets/icons/apps/favicons/sheets.ico" },
         appLauncher: createAppLauncherSurface("283", "docs.google.com/spreadsheets"),
         docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-sheets-2026-24")
       },
@@ -144,7 +144,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/presentation/"] }],
       urlIncludes: ["docs.google.com/presentation"],
       surfaces: {
-        favicon: {},
+        favicon: { assetPath: "assets/icons/apps/favicons/slides.ico" },
         appLauncher: createAppLauncherSurface("281", "docs.google.com/presentation"),
         docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-slides-2026-24")
       },
@@ -164,7 +164,7 @@
       matches: [{ hostname: "docs.google.com", pathnamePrefixes: ["/forms/"] }],
       urlIncludes: ["docs.google.com/forms"],
       surfaces: {
-        favicon: {},
+        favicon: { assetPath: "assets/icons/apps/favicons/forms.ico" },
         appLauncher: createAppLauncherSurface("330", "docs.google.com/forms"),
         docsHomescreenMenu: createDocsHomescreenMenuSurface("docs-homescreen-forms-2026-24")
       },
