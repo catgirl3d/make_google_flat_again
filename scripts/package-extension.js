@@ -299,7 +299,7 @@ function writeDeterministicZip({ stageDir, outputPath }) {
 
     for (const stagedFile of stagedFiles) {
       zipFile.addFile(stagedFile.absolutePath, stagedFile.archivePath, {
-        compress: false,
+        compress: true,
         forceDosTimestamp: true,
         mode: STABLE_FILE_MODE,
         mtime: FIXED_ZIP_DATE

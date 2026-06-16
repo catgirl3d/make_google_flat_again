@@ -150,7 +150,7 @@ function assertArchiveContract(entries, { expectedEntries, excludedEntries }) {
   const includedExcludedEntries = excludedEntries.filter((fileName) => entryNames.includes(fileName));
 
   assert.deepEqual(entryNames, [...entryNames].sort());
-  assert.equal(entries.every((entry) => entry.compressionMethod === 0), true);
+  assert.equal(entries.every((entry) => entry.compressionMethod === 8), true);
   assert.equal(entryNames.some((fileName) => fileName.endsWith("/")), false);
   assert.deepEqual(topLevelEntries, EXPECTED_TOP_LEVEL_ENTRIES);
   assert.deepEqual(missingEntries, []);
