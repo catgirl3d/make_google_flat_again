@@ -7,6 +7,7 @@ A cross-browser extension for restoring older, flatter, and more distinguishable
 | Browser | Version | Download |
 | :--- | :--- | :--- |
 | **Firefox** | [![Firefox Add-on Version](https://img.shields.io/amo/v/classic-google-workspace-icons?color=orange&logo=firefox-browser)](https://addons.mozilla.org/addon/classic-google-workspace-icons/) | [![Download](https://img.shields.io/badge/Install%20for%20Firefox-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/addon/classic-google-workspace-icons/) |
+| **Chrome** | [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/eeemnfjgfomaoglmjolmhdkcmnfbhnlj?color=blue&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/classic-google-workspace/eeemnfjgfomaoglmjolmhdkcmnfbhnlj) | [![Download](https://img.shields.io/badge/Install%20for%20Chrome-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/classic-google-workspace/eeemnfjgfomaoglmjolmhdkcmnfbhnlj) |
 
 ## Features
 
