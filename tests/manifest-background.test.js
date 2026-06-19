@@ -4,13 +4,17 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { buildManifest } = require("../scripts/build-manifest.js");
 
+const BASE_MANIFEST = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "..", "manifests", "base.json"), "utf8")
+);
+
 // This suite owns generated manifest shipping shape and browser-specific manifest divergence,
 // not runtime behavior of background/content/platform modules.
 
 const EXPECTED_BASE_FIELDS = {
   manifest_version: 3,
   name: "Classic Google Workspace Icons",
-  version: "0.1.1",
+  version: BASE_MANIFEST.version,
   description: "Extension for restoring classic Google Workspace icons with local assets and clean shared configuration.",
   icons: {
     16: "assets/extension/icon-16.png",
