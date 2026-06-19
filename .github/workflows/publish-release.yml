@@ -50,6 +50,9 @@ jobs:
             dist/*.zip
           if-no-files-found: error
 
+      - name: Prepare release notes from changelog
+        run: node scripts/extract-release-notes.js "${{ inputs.tag }}" dist/release-notes.md
+
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -57,4 +60,5 @@ jobs:
           files: |
             dist/*.xpi
             dist/*.zip
+          body_path: dist/release-notes.md
           fail_on_unmatched_files: true

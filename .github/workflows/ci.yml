@@ -82,11 +82,19 @@ jobs:
       contents: write
 
     steps:
+      - name: Check out repository at tag
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ github.ref_name }}
+
       - name: Download packaged artifacts
         uses: actions/download-artifact@v4
         with:
           name: make-google-flat-again-packages
           path: dist
+
+      - name: Prepare release notes from changelog
+        run: node scripts/extract-release-notes.js "${{ github.ref_name }}" dist/release-notes.md
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -94,4 +102,5 @@ jobs:
           files: |
             dist/*.xpi
             dist/*.zip
+          body_path: dist/release-notes.md
           fail_on_unmatched_files: true
