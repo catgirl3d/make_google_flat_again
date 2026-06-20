@@ -1,0 +1,83 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Extension (Test & Package)",
+      "type": "shell",
+      "command": "npm run build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Runs unit tests and packages both Chrome and Firefox extensions"
+    },
+    {
+      "label": "Run Unit Tests",
+      "type": "shell",
+      "command": "npm run test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Runs Jest/node native unit tests located in tests/ directory"
+    },
+    {
+      "label": "Stage: Chrome (Dev)",
+      "type": "shell",
+      "command": "npm run stage:chrome:dev",
+      "problemMatcher": [],
+      "detail": "Prepares an unpacked Chrome extension in dev mode (debug logs enabled)"
+    },
+    {
+      "label": "Stage: Chrome (Prod)",
+      "type": "shell",
+      "command": "npm run stage:chrome:prod",
+      "problemMatcher": [],
+      "detail": "Prepares an unpacked Chrome extension in production mode"
+    },
+    {
+      "label": "Stage: Firefox (Dev)",
+      "type": "shell",
+      "command": "npm run stage:firefox:dev",
+      "problemMatcher": [],
+      "detail": "Prepares an unpacked Firefox extension in dev mode (debug logs enabled)"
+    },
+    {
+      "label": "Stage: Firefox (Prod)",
+      "type": "shell",
+      "command": "npm run stage:firefox:prod",
+      "problemMatcher": [],
+      "detail": "Prepares an unpacked Firefox extension in production mode"
+    },
+    {
+      "label": "Package: Chrome Extension",
+      "type": "shell",
+      "command": "npm run package:chrome",
+      "problemMatcher": [],
+      "detail": "Builds and packages Chrome extension into a .zip archive"
+    },
+    {
+      "label": "Package: Firefox Extension",
+      "type": "shell",
+      "command": "npm run package:firefox",
+      "problemMatcher": [],
+      "detail": "Builds and packages Firefox extension into a .xpi archive"
+    },
+    {
+      "label": "Package All Extensions",
+      "type": "shell",
+      "command": "npm run package",
+      "problemMatcher": [],
+      "detail": "Packages both Chrome and Firefox extensions for store submission"
+    },
+    {
+      "label": "Validate Release Tag",
+      "type": "shell",
+      "command": "npm run validate:release-tag",
+      "problemMatcher": [],
+      "detail": "Checks if the current git tag matches the version in manifests/base.json"
+    }
+  ]
+}
