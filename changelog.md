@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.3 - 2026-06-26
+
+This release improves popup polish and makes classic loading icons more reliable in Google Keep and Google Tasks.
+
+### Key Changes
+
+- Fixed loading icon replacement in Google Keep and Google Tasks: classic icons should now apply more reliably even after internal changes on Google's side.
+- Added a Report an Issue link to the popup.
+- Improved the popup UI with a more polished master toggle and cleaner overall visual presentation.
+
 ## v0.1.2 - 2026-06-19
 
 This release makes the return of classic Google Workspace icons more complete and more reliable.
