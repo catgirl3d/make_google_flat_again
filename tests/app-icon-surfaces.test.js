@@ -264,8 +264,11 @@ test("builder APIs keep launcher, docs-menu, loading, and product-logo CSS contr
   withSurfaceModule(environment, (surface) => {
     const launcherCss = surface.buildAppLauncherCss(buildOptions(["drive"]));
     const docsMenuCss = surface.buildDocsHomescreenMenuCss(buildOptions(["docs", "forms"]));
-    const loadingCss = surface.buildSidePanelLoadingCss(buildOptions(["keep"]));
+    const loadingCss = surface.buildSidePanelLoadingCss(buildOptions(["keep", "tasks"]));
     const productLogoCss = surface.buildProductLogoCss(buildOptions(["calendar"], { dayNumber: 9 }));
+
+    assert.deepEqual(getAppById("keep").surfaces.sidePanelLoading.selectors, ['[style*="/companion/icon_assets/logo_keep_"]']);
+    assert.deepEqual(getAppById("tasks").surfaces.sidePanelLoading.selectors, ['[style*="/companion/icon_assets/logo_tasks_"]']);
 
     assert.ok(launcherCss.includes(getAppById("drive").surfaces.appLauncher.selectors[0]));
     assert.ok(launcherCss.includes(getAppById("drive").surfaces.appLauncher.selectors[1]));
@@ -279,6 +282,8 @@ test("builder APIs keep launcher, docs-menu, loading, and product-logo CSS contr
 
     assert.ok(loadingCss.includes(getAppById("keep").surfaces.sidePanelLoading.selectors[0]));
     assert.ok(loadingCss.includes(expectedRuntimeAsset("keep", "sidePanelLoading", {})));
+    assert.ok(loadingCss.includes(getAppById("tasks").surfaces.sidePanelLoading.selectors[0]));
+    assert.ok(loadingCss.includes(expectedRuntimeAsset("tasks", "sidePanelLoading", {})));
     assert.ok(loadingCss.includes("background-size: 128px 128px !important;"));
 
     assert.ok(productLogoCss.includes(getAppById("calendar").surfaces.productLogo.selectors[0]));

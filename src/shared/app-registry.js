@@ -247,7 +247,7 @@
           assetPath: "assets/icons/apps/keep-classic-square.svg",
           iconSize: 128,
           selectors: [
-            '[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_keep_"]'
+            '[style*="/companion/icon_assets/logo_keep_"]'
           ]
         },
         sidePanel: {
@@ -297,7 +297,7 @@
         sidePanelLoading: {
           iconSize: 128,
           selectors: [
-            '[class*="DWWcKd-l4eHX"][style*="/companion/icon_assets/logo_tasks_"]'
+            '[style*="/companion/icon_assets/logo_tasks_"]'
           ]
         }
       },
