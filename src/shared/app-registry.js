@@ -64,6 +64,13 @@
           'img[src*="/images/branding/productlogos/calendar_2026_"]',
           'img[srcset*="/images/branding/productlogos/calendar_2026_"]'
         ], "header-calendar"),
+        sidePanelLoading: {
+          assetPath: "assets/icons/calendar/google-calendar.svg",
+          iconSize: 128,
+          selectors: [
+            '[style*="/companion/icon_assets/logo_calendar_"]'
+          ]
+        },
         sidePanel: {
           iconSize: 20,
           selectors: [

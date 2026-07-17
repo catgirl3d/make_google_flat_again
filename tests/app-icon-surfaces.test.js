@@ -264,9 +264,10 @@ test("builder APIs keep launcher, docs-menu, loading, and product-logo CSS contr
   withSurfaceModule(environment, (surface) => {
     const launcherCss = surface.buildAppLauncherCss(buildOptions(["drive"]));
     const docsMenuCss = surface.buildDocsHomescreenMenuCss(buildOptions(["docs", "forms"]));
-    const loadingCss = surface.buildSidePanelLoadingCss(buildOptions(["keep", "tasks"]));
+    const loadingCss = surface.buildSidePanelLoadingCss(buildOptions(["calendar", "keep", "tasks"], { dayNumber: 9 }));
     const productLogoCss = surface.buildProductLogoCss(buildOptions(["calendar"], { dayNumber: 9 }));
 
+    assert.deepEqual(getAppById("calendar").surfaces.sidePanelLoading.selectors, ['[style*="/companion/icon_assets/logo_calendar_"]']);
     assert.deepEqual(getAppById("keep").surfaces.sidePanelLoading.selectors, ['[style*="/companion/icon_assets/logo_keep_"]']);
     assert.deepEqual(getAppById("tasks").surfaces.sidePanelLoading.selectors, ['[style*="/companion/icon_assets/logo_tasks_"]']);
 
@@ -280,11 +281,13 @@ test("builder APIs keep launcher, docs-menu, loading, and product-logo CSS contr
     assert.ok(docsMenuCss.includes(`${getAppById("docs").surfaces.docsHomescreenMenu.selectors[0]}::before`));
     assert.ok(docsMenuCss.includes('content: "" !important;'));
 
+    assert.ok(loadingCss.includes(getAppById("calendar").surfaces.sidePanelLoading.selectors[0]));
+    assert.ok(loadingCss.includes("runtime://assets/icons/calendar/google-calendar.svg"));
     assert.ok(loadingCss.includes(getAppById("keep").surfaces.sidePanelLoading.selectors[0]));
     assert.ok(loadingCss.includes(expectedRuntimeAsset("keep", "sidePanelLoading", {})));
     assert.ok(loadingCss.includes(getAppById("tasks").surfaces.sidePanelLoading.selectors[0]));
     assert.ok(loadingCss.includes(expectedRuntimeAsset("tasks", "sidePanelLoading", {})));
-    assert.ok(loadingCss.includes("background-size: 128px 128px !important;"));
+    assert.ok(loadingCss.includes("background: transparent url(\"runtime://assets/icons/calendar/google-calendar.svg\") center center / 128px 128px no-repeat !important;"));
 
     assert.ok(productLogoCss.includes(getAppById("calendar").surfaces.productLogo.selectors[0]));
     assert.ok(productLogoCss.includes(getAppById("calendar").surfaces.productLogo.selectors[1]));

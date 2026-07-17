@@ -36,6 +36,19 @@ ${selectors} {
 `.trim();
   }
 
+  function buildLoadingReplacementRule(app, surfaceName, options) {
+    const surfaceConfig = app.surfaces[surfaceName];
+    const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, surfaceName, options)));
+    const iconSize = `${surfaceConfig.iconSize || 20}px`;
+    const selectors = surfaceConfig.selectors.join(",\n");
+
+    return `
+${selectors} {
+  background: transparent url("${iconUrl}") center center / ${iconSize} ${iconSize} no-repeat !important;
+}
+`.trim();
+  }
+
   function buildDocsHomescreenMenuRule(app, surfaceName, options) {
     const surfaceConfig = app.surfaces.docsHomescreenMenu;
     const iconUrl = escapeCssUrl(runtime.getRuntimeUrl(getSurfaceAssetPath(app, "docsHomescreenMenu", options)));
@@ -88,6 +101,7 @@ ${sourceMarker}  content: url("${iconUrl}") !important;
   function buildSurfaceCss(surfaceName, options) {
     const ruleBuilder = {
       docsHomescreenMenu: buildDocsHomescreenMenuRule,
+      sidePanelLoading: buildLoadingReplacementRule,
       productLogo: buildProductLogoRule
     }[surfaceName] || buildReplacementRule;
 
