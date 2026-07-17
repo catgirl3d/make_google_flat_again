@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.4 - 2026-07-17
+
+This release adds classic Google Calendar loading icon support.
+
+### Key Changes
+
+- Added the classic Google Calendar icon for the Calendar side-panel loading state.
+
 ## v0.1.3 - 2026-06-26
 
 This release improves popup polish and makes classic loading icons more reliable in Google Keep and Google Tasks.
